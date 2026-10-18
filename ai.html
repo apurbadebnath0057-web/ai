@@ -1,0 +1,2978 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-50">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NexusPay AI — Business & Payment OS</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js for Financial Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#1e1b4b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Scrollbar & Fintech Polish */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.92);
+            backdrop-filter: blur(12px);
+        }
+
+        .credit-card-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+        }
+
+        .ai-gradient-bg {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+        }
+
+        .ai-glow {
+            box-shadow: 0 0 25px -5px rgba(99, 102, 241, 0.35);
+        }
+
+        @keyframes pulse-subtle {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+        }
+        .animate-pulse-subtle {
+            animation: pulse-subtle 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+
+        /* Print Stylesheet: Only prints the clean Invoice Preview when triggered */
+        @media print {
+            body * {
+                visibility: hidden !important;
+            }
+            #printable-invoice-area,
+            #printable-invoice-area * {
+                visibility: visible !important;
+            }
+            #printable-invoice-area {
+                position: fixed !important;
+                left: 0 !important;
+                top: 0 !important;
+                width: 100% !important;
+                margin: 0 !important;
+                padding: 24px !important;
+                box-shadow: none !important;
+                border: none !important;
+                background: white !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+</head>
+<body class="h-full text-slate-800 antialiased selection:bg-indigo-600 selection:text-white overflow-hidden flex flex-col md:flex-row">
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container" class="fixed top-4 right-4 z-[100] flex flex-col gap-2 max-w-sm w-full pointer-events-none px-4 sm:px-0"></div>
+
+    <!-- Mobile Top Navigation Bar -->
+    <div class="md:hidden bg-slate-900 text-white px-4 py-3 flex items-center justify-between border-b border-slate-800 z-30">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl ai-gradient-bg flex items-center justify-center shadow-md">
+                <i class="fa-solid fa-bolt text-white text-sm"></i>
+            </div>
+            <div>
+                <span class="font-bold tracking-tight text-base">NexusPay</span>
+                <span class="text-[10px] uppercase tracking-wider bg-indigo-500/30 text-indigo-300 border border-indigo-400/30 px-1.5 py-0.5 rounded ml-1 font-semibold">AI OS</span>
+            </div>
+        </div>
+        <div class="flex items-center gap-2">
+            <!-- Mobile Currency Toggle -->
+            <button onclick="toggleCurrency()" class="px-2.5 py-1.5 rounded-lg bg-slate-800 text-xs font-semibold text-slate-200 border border-slate-700">
+                <span id="mobile-currency-badge">₹ INR</span>
+            </button>
+            <button onclick="toggleMobileSidebar()" class="p-2 rounded-lg bg-slate-800 text-slate-300 hover:text-white">
+                <i class="fa-solid fa-bars text-lg"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Sidebar Backdrop (Mobile) -->
+    <div id="sidebar-backdrop" onclick="toggleMobileSidebar()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-30 hidden md:hidden"></div>
+
+    <!-- Left Navigation Sidebar -->
+    <aside id="sidebar" class="fixed md:static inset-y-0 left-0 z-40 w-64 bg-slate-900 text-slate-300 flex flex-col transition-transform duration-300 ease-in-out -translate-x-full md:translate-x-0 border-r border-slate-800 shrink-0">
+        <!-- Brand Header -->
+        <div class="p-5 flex items-center justify-between border-b border-slate-800/80">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl ai-gradient-bg flex items-center justify-center shadow-lg shadow-indigo-500/20">
+                    <i class="fa-solid fa-bolt text-white text-lg"></i>
+                </div>
+                <div>
+                    <div class="flex items-center gap-1.5">
+                        <h1 class="font-bold text-white text-lg tracking-tight leading-none">NexusPay</h1>
+                        <span class="text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">AI</span>
+                    </div>
+                    <p class="text-xs text-slate-400 mt-1">Business & Payment OS</p>
+                </div>
+            </div>
+            <button onclick="toggleMobileSidebar()" class="md:hidden text-slate-400 hover:text-white">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+
+        <!-- Quick Action Button -->
+        <div class="px-4 pt-4 pb-2">
+            <button onclick="openInvoiceModal()" class="w-full py-2.5 px-4 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-sm shadow-lg shadow-indigo-600/25 transition flex items-center justify-center gap-2 cursor-pointer">
+                <i class="fa-solid fa-plus"></i>
+                <span>Create New Invoice</span>
+            </button>
+        </div>
+
+        <!-- Navigation Links -->
+        <nav class="flex-1 px-3 py-3 space-y-1 overflow-y-auto">
+            <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Core Platform</p>
+            
+            <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer bg-indigo-600/15 text-white border border-indigo-500/30">
+                <i class="fa-solid fa-chart-pie w-5 text-center text-indigo-400"></i>
+                <span>Business Dashboard</span>
+            </button>
+
+            <button onclick="switchTab('invoices')" id="nav-invoices" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-file-invoice-dollar w-5 text-center text-slate-400"></i>
+                    <span>Invoices & Payments</span>
+                </div>
+                <span id="sidebar-pending-count" class="text-xs px-2 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-semibold">0</span>
+            </button>
+
+            <button onclick="switchTab('catalog')" id="nav-catalog" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-boxes-stacked w-5 text-center text-slate-400"></i>
+                    <span>Product Catalog</span>
+                </div>
+                <span id="sidebar-catalog-count" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400">0</span>
+            </button>
+
+            <button onclick="switchTab('expenses')" id="nav-expenses" class="nav-btn w-full flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer">
+                <i class="fa-solid fa-receipt w-5 text-center text-slate-400"></i>
+                <span>Expenses & Ledger</span>
+            </button>
+
+            <div class="pt-4 pb-1">
+                <p class="px-3 text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-2">Intelligence</p>
+            </div>
+
+            <button onclick="switchTab('ai-assistant')" id="nav-ai-assistant" class="nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer group">
+                <div class="flex items-center gap-3">
+                    <i class="fa-solid fa-wand-magic-sparkles w-5 text-center text-purple-400 group-hover:text-purple-300"></i>
+                    <span>Gemini AI Studio</span>
+                </div>
+                <span class="text-[10px] px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30 font-semibold">LIVE</span>
+            </button>
+        </nav>
+
+        <!-- Quick Terminal / Checkout Simulator Trigger -->
+        <div class="p-4 m-3 rounded-2xl bg-gradient-to-br from-slate-800 to-slate-800/60 border border-slate-700/70">
+            <div class="flex items-center gap-2 text-white font-semibold text-xs mb-1">
+                <i class="fa-solid fa-qrcode text-emerald-400"></i>
+                <span>Instant POS Terminal</span>
+            </div>
+            <p class="text-[11px] text-slate-400 mb-3 leading-relaxed">Generate an instant UPI QR or payment link for walk-in clients.</p>
+            <button onclick="openQuickPosCheckout()" class="w-full py-2 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition flex items-center justify-center gap-1.5 cursor-pointer shadow-sm">
+                <i class="fa-solid fa-bolt"></i>
+                <span>Launch Checkout</span>
+            </button>
+        </div>
+
+        <!-- Business Profile Footer -->
+        <div class="p-4 border-t border-slate-800 flex items-center justify-between">
+            <div class="flex items-center gap-2.5 min-w-0">
+                <div class="w-8 h-8 rounded-full bg-indigo-500/20 border border-indigo-400/30 flex items-center justify-center text-indigo-300 font-bold text-xs shrink-0">
+                    AV
+                </div>
+                <div class="truncate">
+                    <p id="sidebar-biz-name" class="text-xs font-semibold text-white truncate">Apex Ventures Pvt Ltd</p>
+                    <p id="sidebar-biz-upi" class="text-[11px] text-slate-400 font-mono truncate">apexventures@okicici</p>
+                </div>
+            </div>
+            <button onclick="openBusinessSettingsModal()" title="Business Settings" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition cursor-pointer">
+                <i class="fa-solid fa-gear text-sm"></i>
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 flex flex-col h-full overflow-hidden bg-slate-50">
+        
+        <!-- Top Desktop Header -->
+        <header class="hidden md:flex items-center justify-between px-8 py-4 bg-white border-b border-slate-200/80 shrink-0">
+            <div>
+                <h2 id="page-title" class="text-xl font-bold text-slate-900 tracking-tight">Business Dashboard</h2>
+                <p id="page-subtitle" class="text-xs text-slate-500 mt-0.5">Real-time revenue metrics, payment velocity, and AI cash-flow insights</p>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <!-- Currency Switcher (INR / USD) -->
+                <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
+                    <button onclick="setCurrency('INR')" id="btn-curr-inr" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer bg-white text-slate-900 shadow-xs">
+                        ₹ INR
+                    </button>
+                    <button onclick="setCurrency('USD')" id="btn-curr-usd" class="px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-slate-600 hover:text-slate-900">
+                        $ USD
+                    </button>
+                </div>
+
+                <!-- Record Expense Button -->
+                <button onclick="openExpenseModal()" class="px-3.5 py-2 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 font-medium text-xs flex items-center gap-2 transition cursor-pointer shadow-2xs">
+                    <i class="fa-solid fa-minus-circle text-rose-500"></i>
+                    <span>Log Expense</span>
+                </button>
+
+                <!-- Ask AI CFO Button -->
+                <button onclick="switchTab('ai-assistant'); generateFinancialInsights();" class="px-4 py-2 rounded-xl ai-gradient-bg text-white font-semibold text-xs flex items-center gap-2 shadow-md hover:opacity-95 transition cursor-pointer">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <span>AI Financial Audit</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- Scrollable View Container -->
+        <div class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+            <!-- ========================================== -->
+            <!-- VIEW 1: BUSINESS DASHBOARD                 -->
+            <!-- ========================================== -->
+            <section id="view-dashboard" class="space-y-6">
+                
+                <!-- KPI Cards Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-5">
+                    <!-- Total Revenue -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Total Collected Revenue</span>
+                            <div class="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
+                                <i class="fa-solid fa-arrow-trend-up text-base"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <h3 id="kpi-revenue" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">₹0</h3>
+                            <span class="text-xs font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full">+18.4%</span>
+                        </div>
+                        <p id="kpi-revenue-sub" class="text-xs text-slate-500 mt-2">Across 0 paid invoices</p>
+                    </div>
+
+                    <!-- Pending & Overdue Payments -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Pending Receivables</span>
+                            <div class="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
+                                <i class="fa-solid fa-clock-rotate-left text-base"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <h3 id="kpi-pending" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">₹0</h3>
+                            <span id="kpi-overdue-badge" class="text-xs font-semibold text-rose-600 bg-rose-50 px-2 py-0.5 rounded-full">0 Overdue</span>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                            <span id="kpi-pending-sub">Awaiting client settlement</span>
+                            <button onclick="switchTab('invoices')" class="text-indigo-600 hover:underline font-medium cursor-pointer">Collect →</button>
+                        </div>
+                    </div>
+
+                    <!-- Total Expenses -->
+                    <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-500">Operating Expenses</span>
+                            <div class="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center">
+                                <i class="fa-solid fa-wallet text-base"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <h3 id="kpi-expenses" class="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">₹0</h3>
+                            <span class="text-xs font-medium text-slate-500">This Quarter</span>
+                        </div>
+                        <div class="mt-2 flex items-center justify-between text-xs text-slate-500">
+                            <span id="kpi-expenses-sub">0 recorded outflows</span>
+                            <button onclick="openExpenseModal()" class="text-indigo-600 hover:underline font-medium cursor-pointer">+ Add</button>
+                        </div>
+                    </div>
+
+                    <!-- Net Profit & Margin -->
+                    <div class="bg-slate-900 text-white rounded-2xl p-5 border border-slate-800 shadow-md relative overflow-hidden">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-semibold uppercase tracking-wider text-slate-400">Net Profit & Margin</span>
+                            <div class="w-10 h-10 rounded-xl bg-indigo-500/20 text-indigo-300 border border-indigo-400/20 flex items-center justify-center">
+                                <i class="fa-solid fa-scale-balanced text-base"></i>
+                            </div>
+                        </div>
+                        <div class="mt-3 flex items-baseline gap-2">
+                            <h3 id="kpi-profit" class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">₹0</h3>
+                            <span id="kpi-margin-badge" class="text-xs font-semibold text-indigo-300 bg-indigo-500/20 border border-indigo-400/30 px-2 py-0.5 rounded-full">0% Margin</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mt-2">Realized profit (Paid Rev - Expenses)</p>
+                    </div>
+                </div>
+
+                <!-- AI Executive Summary Banner -->
+                <div class="rounded-2xl bg-gradient-to-r from-indigo-900 via-slate-900 to-purple-950 text-white p-5 sm:p-6 shadow-md border border-indigo-500/20 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/10 backdrop-blur-xs border border-white/15 flex items-center justify-center shrink-0 text-indigo-300">
+                            <i class="fa-solid fa-robot text-xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-300">Gemini AI Live Briefing</span>
+                                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                            </div>
+                            <p id="dashboard-ai-brief" class="text-sm text-slate-200 mt-1 leading-relaxed">
+                                Analyzing your cash flow, pending receivables, and product velocity...
+                            </p>
+                        </div>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2.5 shrink-0 w-full lg:w-auto">
+                        <button onclick="switchTab('ai-assistant'); generateFinancialInsights();" class="flex-1 lg:flex-initial px-4 py-2.5 rounded-xl bg-white text-slate-900 hover:bg-indigo-50 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer shadow-xs">
+                            <i class="fa-solid fa-wand-magic-sparkles text-indigo-600"></i>
+                            <span>Deep AI Insights</span>
+                        </button>
+                        <button onclick="switchTab('ai-assistant')" class="flex-1 lg:flex-initial px-4 py-2.5 rounded-xl bg-white/10 hover:bg-white/15 text-white border border-white/15 font-semibold text-xs transition flex items-center justify-center gap-2 cursor-pointer">
+                            <i class="fa-regular fa-comment-dots"></i>
+                            <span>Draft Reminder</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Charts Row -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Main Revenue vs Expense Chart -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-5">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Cash Flow & Revenue Trajectory</h3>
+                                <p class="text-xs text-slate-500">6-Month Revenue vs. Operating Expenses</p>
+                            </div>
+                            <div class="flex items-center gap-4 text-xs font-medium">
+                                <span class="flex items-center gap-1.5 text-slate-600">
+                                    <span class="w-3 h-3 rounded-xs bg-indigo-600 inline-block"></span> Revenue
+                                </span>
+                                <span class="flex items-center gap-1.5 text-slate-600">
+                                    <span class="w-3 h-3 rounded-xs bg-rose-400 inline-block"></span> Expenses
+                                </span>
+                            </div>
+                        </div>
+                        <div class="relative h-64 sm:h-72 w-full flex-1">
+                            <canvas id="cashflowChart"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- Payment Modes & Invoice Status Breakdown -->
+                    <div class="bg-white rounded-2xl p-5 sm:p-6 border border-slate-200/80 shadow-xs flex flex-col justify-between">
+                        <div>
+                            <h3 class="font-bold text-slate-900 text-base">Collection Channels</h3>
+                            <p class="text-xs text-slate-500 mb-4">Settlement split by payment rail</p>
+                            <div class="relative h-48 w-full flex items-center justify-center">
+                                <canvas id="paymentMethodsChart"></canvas>
+                            </div>
+                        </div>
+                        <div id="channel-legend" class="mt-4 pt-4 border-t border-slate-100 space-y-2 text-xs">
+                            <!-- Populated dynamically -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Row: Recent Transactions & Actionable Overdue Invoices -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- Recent Transactions Ledger -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Recent Transactions</h3>
+                                <p class="text-xs text-slate-500">Live settlement & expense feed</p>
+                            </div>
+                            <button onclick="switchTab('expenses')" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 cursor-pointer">View All →</button>
+                        </div>
+                        <div id="dashboard-recent-tx" class="divide-y divide-slate-100 flex-1">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Priority Invoices Needing Attention -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
+                        <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                            <div>
+                                <h3 class="font-bold text-slate-900 text-base">Awaiting Payment</h3>
+                                <p class="text-xs text-slate-500">Collect via UPI QR, Card, or AI Reminder</p>
+                            </div>
+                            <button onclick="openInvoiceModal()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-700 cursor-pointer">+ New Invoice</button>
+                        </div>
+                        <div id="dashboard-pending-invoices" class="divide-y divide-slate-100 flex-1">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- VIEW 2: INVOICING & PAYMENT SYSTEM         -->
+            <!-- ========================================== -->
+            <section id="view-invoices" class="space-y-6 hidden">
+                <!-- Controls & Filter Bar -->
+                <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/80 shadow-xs flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="filterInvoices('ALL')" id="inv-filter-ALL" class="inv-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white transition cursor-pointer">
+                            All Invoices
+                        </button>
+                        <button onclick="filterInvoices('Paid')" id="inv-filter-Paid" class="inv-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">
+                            Paid
+                        </button>
+                        <button onclick="filterInvoices('Pending')" id="inv-filter-Pending" class="inv-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">
+                            Pending
+                        </button>
+                        <button onclick="filterInvoices('Overdue')" id="inv-filter-Overdue" class="inv-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer">
+                            Overdue
+                        </button>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
+                        <div class="relative flex-1 sm:w-64">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="invoice-search" oninput="renderInvoicesTable()" placeholder="Search client, ID, email..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20">
+                        </div>
+                        <button onclick="openInvoiceModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center justify-center gap-2 shadow-sm transition cursor-pointer shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Create Invoice</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Invoices Table Card -->
+                <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50/80 border-b border-slate-200/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                                    <th class="py-3.5 px-5">Invoice ID</th>
+                                    <th class="py-3.5 px-5">Client Details</th>
+                                    <th class="py-3.5 px-5">Issue / Due Date</th>
+                                    <th class="py-3.5 px-5">Amount</th>
+                                    <th class="py-3.5 px-5">Status</th>
+                                    <th class="py-3.5 px-5 text-right">Actions & Checkout</th>
+                                </tr>
+                            </thead>
+                            <tbody id="invoices-table-body" class="divide-y divide-slate-100 text-sm">
+                                <!-- Populated via JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- VIEW 3: PRODUCT & SERVICE CATALOG          -->
+            <!-- ========================================== -->
+            <section id="view-catalog" class="space-y-6 hidden">
+                <!-- Catalog Header Banner -->
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Products & Billable Services</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Click "Add to Invoice" on any item to launch the invoice builder pre-populated with that item.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="relative flex-1 sm:w-60">
+                            <i class="fa-solid fa-magnifying-glass absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                            <input type="text" id="catalog-search" oninput="renderCatalog()" placeholder="Filter products..." class="w-full pl-9 pr-4 py-2 rounded-xl border border-slate-200 text-xs focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <button onclick="openProductModal()" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer shrink-0">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Product / Service</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Product Grid -->
+                <div id="catalog-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
+                    <!-- Populated via JS -->
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- VIEW 4: EXPENSES & LEDGER                  -->
+            <!-- ========================================== -->
+            <section id="view-expenses" class="space-y-6 hidden">
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h3 class="font-bold text-slate-900 text-base">Operating Expenses & Cash Ledger</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">Track vendor outflows and incoming client payments in one unified audit log.</p>
+                    </div>
+                    <button onclick="openExpenseModal()" class="px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-500 text-white font-semibold text-xs flex items-center gap-2 shadow-sm transition cursor-pointer self-start sm:self-auto">
+                        <i class="fa-solid fa-plus"></i>
+                        <span>Record Business Expense</span>
+                    </button>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Expense Table -->
+                    <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+                            <h4 class="font-bold text-sm text-slate-800">Recorded Expenses</h4>
+                            <span id="expense-count-badge" class="text-xs text-slate-500">0 items</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr class="bg-slate-50 border-b border-slate-200/80 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+                                        <th class="py-3 px-4">Title / Vendor</th>
+                                        <th class="py-3 px-4">Category</th>
+                                        <th class="py-3 px-4">Date</th>
+                                        <th class="py-3 px-4">Amount</th>
+                                        <th class="py-3 px-4 text-right">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="expenses-table-body" class="divide-y divide-slate-100 text-sm">
+                                    <!-- Populated via JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Complete Settlement Feed -->
+                    <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden flex flex-col">
+                        <div class="p-4 border-b border-slate-100">
+                            <h4 class="font-bold text-sm text-slate-800">Payment Gateway Log</h4>
+                            <p class="text-xs text-slate-500">Verified UPI, Card & Bank settlements</p>
+                        </div>
+                        <div id="full-settlement-log" class="divide-y divide-slate-100 max-h-[460px] overflow-y-auto">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ========================================== -->
+            <!-- VIEW 5: GEMINI AI BUSINESS ASSISTANT       -->
+            <!-- ========================================== -->
+            <section id="view-ai-assistant" class="space-y-6 hidden">
+                <!-- AI Top Banner -->
+                <div class="rounded-2xl ai-gradient-bg text-white p-6 shadow-lg flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+                    <div class="flex items-start gap-4">
+                        <div class="w-12 h-12 rounded-2xl bg-white/15 backdrop-blur-md flex items-center justify-center text-white shrink-0 border border-white/20">
+                            <i class="fa-solid fa-brain text-2xl"></i>
+                        </div>
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <h3 class="text-lg font-extrabold tracking-tight">NexusPay Gemini AI CFO & Copywriter</h3>
+                                <span class="text-[10px] font-bold uppercase tracking-wider bg-white/20 px-2 py-0.5 rounded-full">gemini-3-flash-preview</span>
+                            </div>
+                            <p class="text-xs sm:text-sm text-indigo-100 mt-1 max-w-2xl">
+                                Connected directly to your live invoices, expenses, and product catalog. Generate executive financial diagnostics, automated WhatsApp/Email payment reminders, and high-converting sales pitches.
+                            </p>
+                        </div>
+                    </div>
+                    <button onclick="generateFinancialInsights()" id="btn-run-ai-audit" class="px-5 py-2.5 rounded-xl bg-white text-indigo-950 hover:bg-indigo-50 font-bold text-xs shadow-md transition flex items-center gap-2 cursor-pointer shrink-0">
+                        <i class="fa-solid fa-bolt text-indigo-600"></i>
+                        <span>Run Live Financial Audit</span>
+                    </button>
+                </div>
+
+                <!-- 3-Column / Split AI Workspace -->
+                <div class="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    
+                    <!-- Left Column (7 cols): Smart Financial Insights + AI Content Generator -->
+                    <div class="xl:col-span-7 space-y-6">
+                        
+                        <!-- Module A: Smart Financial Insights -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-chart-line text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-sm">1. Smart Financial Insights & Growth Strategy</h4>
+                                        <p class="text-[11px] text-slate-500">AI analysis of your revenue, expenses, and overdue receivables</p>
+                                    </div>
+                                </div>
+                                <button onclick="generateFinancialInsights()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 flex items-center gap-1 cursor-pointer">
+                                    <i class="fa-solid fa-rotate"></i> Refresh
+                                </button>
+                            </div>
+                            <div id="ai-insights-container" class="p-5 text-sm text-slate-700 space-y-3 leading-relaxed">
+                                <!-- Populated dynamically by Gemini API or Initial Audit -->
+                            </div>
+                        </div>
+
+                        <!-- Module B: AI Content & Reminder Generator -->
+                        <div class="bg-white rounded-2xl border border-slate-200/80 shadow-xs overflow-hidden">
+                            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                                        <i class="fa-solid fa-pen-nib text-sm"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-slate-900 text-sm">2. AI Business Content & Payment Reminder Studio</h4>
+                                        <p class="text-[11px] text-slate-500">Auto-write WhatsApp reminders, professional invoice notes, or product pitches</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="p-5 space-y-4">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-xs font-semibold text-slate-700 mb-1.5">Content Type</label>
+                                        <select id="ai-content-type" onchange="updateAiContentTargetOptions()" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500">
+                                            <option value="whatsapp_reminder">WhatsApp Payment Reminder (Polite & Direct)</option>
+                                            <option value="email_overdue">Formal Overdue Invoice Follow-Up Email</option>
+                                            <option value="invoice_note">Professional Invoice Thank-You & Terms Note</option>
+                                            <option value="product_pitch">High-Converting Product / Service Pitch</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label id="ai-target-label" class="block text-xs font-semibold text-slate-700 mb-1.5">Select Invoice / Product</label>
+                                        <select id="ai-content-target" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs font-medium text-slate-800 focus:outline-none focus:border-indigo-500">
+                                            <!-- Populated dynamically -->
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div>
+                                    <label class="block text-xs font-semibold text-slate-700 mb-1.5">Tone & Additional Instructions (Optional)</label>
+                                    <div class="flex gap-2">
+                                        <input type="text" id="ai-content-custom" placeholder="e.g., Offer a 5% early payment discount if settled today via UPI..." class="flex-1 rounded-xl border border-slate-200 px-3.5 py-2 text-xs focus:outline-none focus:border-indigo-500">
+                                        <button onclick="generateAiBusinessCopy()" id="btn-generate-copy" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-2 transition cursor-pointer shrink-0 shadow-xs">
+                                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                                            <span>Generate with AI</span>
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Generated Output Box -->
+                                <div class="rounded-xl bg-slate-50 border border-slate-200/80 p-4 relative">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Generated Draft</span>
+                                        <div class="flex items-center gap-2">
+                                            <button onclick="copyAiDraft()" class="px-2.5 py-1 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-700 text-xs font-medium flex items-center gap-1.5 transition cursor-pointer">
+                                                <i class="fa-regular fa-copy"></i> Copy Text
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <textarea id="ai-generated-copy" rows="6" class="w-full bg-transparent text-xs sm:text-sm text-slate-800 focus:outline-none resize-y leading-relaxed font-sans" placeholder="Click 'Generate with AI' to craft a tailored message using your live invoice or product details..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right Column (5 cols): Interactive AI Business Chat -->
+                    <div class="xl:col-span-5 bg-white rounded-2xl border border-slate-200/80 shadow-xs flex flex-col h-[640px] overflow-hidden">
+                        <div class="p-4 border-b border-slate-100 bg-slate-900 text-white flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-xl ai-gradient-bg flex items-center justify-center">
+                                    <i class="fa-solid fa-comments-dollar text-white text-sm"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-bold text-sm">3. Interactive AI Business Advisor</h4>
+                                    <p class="text-[11px] text-slate-400">Ask about pricing, taxes, cash flow, or strategy</p>
+                                </div>
+                            </div>
+                            <button onclick="clearAiChat()" title="Reset Chat" class="text-slate-400 hover:text-white text-xs px-2 py-1 rounded hover:bg-slate-800 transition cursor-pointer">
+                                <i class="fa-solid fa-trash-can"></i>
+                            </button>
+                        </div>
+
+                        <!-- Quick Prompt Pills -->
+                        <div class="px-4 py-2.5 bg-slate-50 border-b border-slate-100 flex items-center gap-2 overflow-x-auto no-scrollbar">
+                            <button onclick="sendQuickChatPrompt('Which clients owe me the most money right now and how should I prioritize collections?')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigo-400 text-[11px] font-medium text-slate-700 whitespace-nowrap transition cursor-pointer">
+                                💰 Prioritize collections
+                            </button>
+                            <button onclick="sendQuickChatPrompt('Suggest a high-margin bundle from my current product catalog to boost average order value.')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigo-400 text-[11px] font-medium text-slate-700 whitespace-nowrap transition cursor-pointer">
+                                📦 Bundle pricing strategy
+                            </button>
+                            <button onclick="sendQuickChatPrompt('Analyze my expense-to-revenue ratio and give 3 cost optimization tips.')" class="px-2.5 py-1 rounded-full bg-white border border-slate-200 hover:border-indigo-400 text-[11px] font-medium text-slate-700 whitespace-nowrap transition cursor-pointer">
+                                📉 Optimize expenses
+                            </button>
+                        </div>
+
+                        <!-- Chat Messages Area -->
+                        <div id="ai-chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 bg-slate-50/50">
+                            <!-- Initial AI Greeting -->
+                        </div>
+
+                        <!-- Chat Input Form -->
+                        <form onsubmit="handleAiChatSubmit(event)" class="p-3.5 bg-white border-t border-slate-200 flex items-center gap-2">
+                            <input type="text" id="ai-chat-input" placeholder="Ask Gemini about your business finances..." class="flex-1 rounded-xl border border-slate-200 px-3.5 py-2.5 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                            <button type="submit" id="btn-chat-send" class="px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition flex items-center gap-1.5 cursor-pointer shrink-0">
+                                <span>Send</span>
+                                <i class="fa-solid fa-paper-plane text-[11px]"></i>
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </section>
+
+        </div>
+    </main>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 1: CREATE / EDIT INVOICE MODAL                      -->
+    <!-- ========================================================= -->
+    <div id="invoice-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8 max-h-[92vh] flex flex-col">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-2.5">
+                    <i class="fa-solid fa-file-invoice-dollar text-indigo-400 text-lg"></i>
+                    <h3 id="invoice-modal-title" class="font-bold text-base">Create New Invoice</h3>
+                </div>
+                <button onclick="closeInvoiceModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark text-lg"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 overflow-y-auto space-y-5 flex-1">
+                <input type="hidden" id="inv-edit-id">
+
+                <!-- Client Info Grid -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Client / Company Name *</label>
+                        <input type="text" id="inv-client-name" required placeholder="e.g., Horizon Labs Ltd" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Client Email *</label>
+                        <input type="email" id="inv-client-email" required placeholder="billing@horizonlabs.io" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Phone / WhatsApp</label>
+                        <input type="text" id="inv-client-phone" placeholder="+91 98765 43210" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+                    <div class="sm:col-span-2">
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Billing Address & GSTIN / Tax ID</label>
+                        <input type="text" id="inv-client-address" placeholder="Bengaluru, KA • GSTIN: 29AABCH..." class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Due Date *</label>
+                        <input type="date" id="inv-due-date" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Status</label>
+                        <select id="inv-status" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                            <option value="Pending">Pending</option>
+                            <option value="Paid">Paid</option>
+                            <option value="Overdue">Overdue</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Quick Add from Product Catalog Bar -->
+                <div class="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-100 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3">
+                    <div class="flex items-center gap-2 text-xs font-semibold text-indigo-900">
+                        <i class="fa-solid fa-boxes-stacked text-indigo-600"></i>
+                        <span>Quick-Add from Catalog:</span>
+                    </div>
+                    <div class="flex items-center gap-2 flex-1 max-w-md">
+                        <select id="inv-catalog-picker" class="flex-1 rounded-lg border border-indigo-200 bg-white px-3 py-1.5 text-xs text-slate-800 focus:outline-none">
+                            <!-- Populated via JS -->
+                        </select>
+                        <button type="button" onclick="addCatalogItemToInvoiceForm()" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer shrink-0">
+                            + Insert Item
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Line Items Table -->
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <label class="text-xs font-bold uppercase tracking-wider text-slate-500">Itemized Billing</label>
+                        <button type="button" onclick="addBlankInvoiceRow()" class="text-xs font-semibold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                            + Add Custom Row
+                        </button>
+                    </div>
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-slate-50 border-b border-slate-200 text-[11px] font-semibold text-slate-500">
+                                    <th class="py-2.5 px-3">Description</th>
+                                    <th class="py-2.5 px-3 w-20">Qty</th>
+                                    <th class="py-2.5 px-3 w-32">Unit Price (<span class="curr-symbol">₹</span>)</th>
+                                    <th class="py-2.5 px-3 w-28 text-right">Line Total</th>
+                                    <th class="py-2.5 px-2 w-10"></th>
+                                </tr>
+                            </thead>
+                            <tbody id="inv-items-tbody" class="divide-y divide-slate-100 text-xs sm:text-sm">
+                                <!-- Dynamic Rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Tax, Discount & Notes Row -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-semibold text-slate-700">Invoice Note & Payment Terms</label>
+                            <button type="button" onclick="aiDraftInvoiceNoteInModal()" class="text-[11px] font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1 cursor-pointer">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> AI Write Note
+                            </button>
+                        </div>
+                        <textarea id="inv-notes" rows="3" placeholder="Thank you for your business! Payment due within 14 days via UPI or Bank Transfer." class="w-full rounded-xl border border-slate-200 p-3 text-xs focus:outline-none focus:border-indigo-500"></textarea>
+                    </div>
+
+                    <div class="bg-slate-50 rounded-xl p-4 border border-slate-200/80 space-y-2.5 text-xs">
+                        <div class="flex items-center justify-between">
+                            <span class="text-slate-500 font-medium">Subtotal</span>
+                            <span id="inv-form-subtotal" class="font-semibold text-slate-800">₹0.00</span>
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-slate-500 font-medium">Tax / GST (%)</span>
+                            <input type="number" id="inv-tax-rate" value="18" min="0" max="100" step="0.5" oninput="recalcInvoiceFormTotals()" class="w-20 text-right rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold">
+                        </div>
+                        <div class="flex items-center justify-between gap-4">
+                            <span class="text-slate-500 font-medium">Discount (<span class="curr-symbol">₹</span>)</span>
+                            <input type="number" id="inv-discount" value="0" min="0" step="10" oninput="recalcInvoiceFormTotals()" class="w-24 text-right rounded-lg border border-slate-200 bg-white px-2 py-1 text-xs font-semibold">
+                        </div>
+                        <div class="pt-2 border-t border-slate-200 flex items-center justify-between text-sm font-extrabold text-slate-900">
+                            <span>Grand Total</span>
+                            <span id="inv-form-grandtotal" class="text-indigo-600 text-base">₹0.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3 shrink-0">
+                <button type="button" onclick="closeInvoiceModal()" class="px-4 py-2 rounded-xl border border-slate-200 bg-white text-slate-700 font-semibold text-xs hover:bg-slate-100 transition cursor-pointer">
+                    Cancel
+                </button>
+                <button type="button" onclick="saveInvoice()" class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md transition flex items-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-check"></i>
+                    <span>Save Invoice</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 2: INTERACTIVE PAYMENT & CHECKOUT SIMULATOR         -->
+    <!-- ========================================================= -->
+    <div id="checkout-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-3xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden my-6">
+            <!-- Gateway Top Header -->
+            <div class="p-5 bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white relative">
+                <button onclick="closeCheckoutModal()" class="absolute top-4 right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-slate-300 hover:text-white transition cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/30 border border-indigo-400/40 flex items-center justify-center">
+                        <i class="fa-solid fa-shield-halved text-indigo-300"></i>
+                    </div>
+                    <div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="font-bold text-sm tracking-tight" id="checkout-merchant-name">Apex Ventures Pvt Ltd</span>
+                            <i class="fa-solid fa-circle-check text-emerald-400 text-xs" title="Verified Merchant"></i>
+                        </div>
+                        <p id="checkout-inv-label" class="text-xs text-slate-300">Invoice #INV-1001</p>
+                    </div>
+                </div>
+                <div class="mt-4 pt-4 border-t border-white/10 flex items-baseline justify-between">
+                    <span class="text-xs text-slate-300 uppercase tracking-wider font-medium">Total Payable</span>
+                    <span id="checkout-amount-display" class="text-2xl font-extrabold tracking-tight text-white">₹0.00</span>
+                </div>
+            </div>
+
+            <!-- Payment Mode Tabs -->
+            <div class="grid grid-cols-3 bg-slate-100 p-1.5 m-4 rounded-xl border border-slate-200 text-xs font-semibold">
+                <button onclick="switchCheckoutTab('upi')" id="tab-pay-upi" class="py-2 rounded-lg bg-white text-slate-900 shadow-2xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-qrcode text-emerald-600"></i> UPI QR
+                </button>
+                <button onclick="switchCheckoutTab('card')" id="tab-pay-card" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <i class="fa-regular fa-credit-card text-indigo-600"></i> Card
+                </button>
+                <button onclick="switchCheckoutTab('link')" id="tab-pay-link" class="py-2 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer flex items-center justify-center gap-1.5">
+                    <i class="fa-solid fa-share-nodes text-purple-600"></i> Share Link
+                </button>
+            </div>
+
+            <!-- TAB 1: UPI QR CODE & INSTANT SCAN SIMULATOR -->
+            <div id="checkout-pane-upi" class="px-6 pb-6 space-y-4">
+                <div class="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col items-center text-center">
+                    <div class="text-[11px] font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 border border-emerald-200 px-2.5 py-0.5 rounded-full mb-3">
+                        Scan with GPay • PhonePe • Paytm • BHIM
+                    </div>
+                    <!-- Dynamic SVG QR Code Container -->
+                    <div id="upi-qr-container" class="w-44 h-44 bg-white p-3 rounded-2xl border border-slate-200 shadow-xs flex items-center justify-center">
+                        <!-- Rendered via JS SVG QR generator -->
+                    </div>
+                    <p id="checkout-upi-id-display" class="text-xs font-mono text-slate-600 mt-3 select-all">UPI ID: apexventures@okicici</p>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-semibold text-slate-600 mb-1">Or Enter Customer VPA / UPI ID</label>
+                    <input type="text" id="sim-customer-vpa" value="rahul.sharma@okhdfcbank" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <button onclick="processSimulatedPayment('UPI Instant QR')" id="btn-sim-upi-pay" class="w-full py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-emerald-600/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Simulate Instant UPI Settlement</span>
+                </button>
+            </div>
+
+            <!-- TAB 2: CARD CHECKOUT SIMULATOR -->
+            <div id="checkout-pane-card" class="px-6 pb-6 space-y-4 hidden">
+                <!-- Interactive Visual Card -->
+                <div class="credit-card-bg rounded-2xl p-4 text-white shadow-lg relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-5">
+                        <i class="fa-solid fa-microchip text-amber-300 text-2xl"></i>
+                        <span class="text-xs font-mono uppercase tracking-widest text-indigo-200">NexusPay Secure</span>
+                    </div>
+                    <p id="card-preview-num" class="font-mono text-base tracking-widest mb-4">4532 •••• •••• 8891</p>
+                    <div class="flex items-center justify-between text-[11px] text-slate-300 font-mono">
+                        <span id="card-preview-name">AUTHORIZED CLIENT</span>
+                        <span id="card-preview-exp">08/29</span>
+                    </div>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-600 mb-1">Card Number</label>
+                        <input type="text" id="sim-card-num" value="4532 8910 3412 8891" maxlength="19" oninput="document.getElementById('card-preview-num').textContent = this.value || '•••• •••• •••• ••••'" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-indigo-500">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">Expiry</label>
+                            <input type="text" id="sim-card-exp" value="08/29" maxlength="5" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold text-slate-600 mb-1">CVV</label>
+                            <input type="password" value="842" maxlength="4" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs font-mono focus:outline-none focus:border-indigo-500">
+                        </div>
+                    </div>
+                </div>
+
+                <button onclick="processSimulatedPayment('Corporate Card')" class="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs uppercase tracking-wider shadow-lg shadow-indigo-600/20 transition flex items-center justify-center gap-2 cursor-pointer">
+                    <i class="fa-solid fa-lock"></i>
+                    <span>Authorize & Pay Now</span>
+                </button>
+            </div>
+
+            <!-- TAB 3: SHAREABLE PAYMENT LINK & WHATSAPP REMINDER -->
+            <div id="checkout-pane-link" class="px-6 pb-6 space-y-4 hidden">
+                <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                    <label class="block text-[11px] font-bold uppercase tracking-wider text-slate-500">Shareable Checkout Link</label>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="checkout-share-url" readonly class="flex-1 bg-white rounded-xl border border-slate-200 px-3 py-2 text-xs font-mono text-slate-700 select-all">
+                        <button onclick="copyShareablePaymentLink()" class="px-3 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold transition cursor-pointer shrink-0">
+                            <i class="fa-regular fa-copy"></i> Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-purple-50/70 border border-purple-200/80 space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-purple-950 flex items-center gap-1.5">
+                            <i class="fa-solid fa-wand-magic-sparkles text-purple-600"></i> AI Payment Request Message
+                        </span>
+                        <button onclick="generateCheckoutReminderText()" class="text-[11px] font-semibold text-purple-700 hover:underline cursor-pointer">
+                            Regenerate
+                        </button>
+                    </div>
+                    <textarea id="checkout-whatsapp-msg" rows="4" class="w-full rounded-xl bg-white border border-purple-200 p-2.5 text-xs text-slate-700 focus:outline-none"></textarea>
+                    <div class="flex gap-2">
+                        <button onclick="copyTextValue('checkout-whatsapp-msg', 'Payment reminder copied!')" class="flex-1 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs transition cursor-pointer flex items-center justify-center gap-1.5">
+                            <i class="fa-brands fa-whatsapp"></i> Copy for WhatsApp / Email
+                        </button>
+                    </div>
+                </div>
+
+                <button onclick="processSimulatedPayment('Payment Link')" class="w-full py-2.5 rounded-xl border border-emerald-600 text-emerald-700 hover:bg-emerald-50 font-bold text-xs transition cursor-pointer">
+                    Simulate Client Paying via Link
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 3: PRINTABLE / DOWNLOADABLE CLEAN INVOICE VIEW      -->
+    <!-- ========================================================= -->
+    <div id="invoice-preview-modal" class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur-xs hidden items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-3xl w-full shadow-2xl border border-slate-200 overflow-hidden my-8 flex flex-col max-h-[92vh]">
+            <!-- Top Action Bar (Hidden when printing) -->
+            <div class="no-print px-6 py-4 bg-slate-900 text-white flex flex-wrap items-center justify-between gap-3 shrink-0">
+                <div class="flex items-center gap-2">
+                    <i class="fa-solid fa-print text-indigo-400"></i>
+                    <span class="font-bold text-sm">Tax Invoice Document Preview</span>
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="window.print()" class="px-3.5 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer">
+                        <i class="fa-solid fa-print"></i> Print / Save PDF
+                    </button>
+                    <button onclick="downloadInvoiceHtml()" class="px-3.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs flex items-center gap-1.5 transition cursor-pointer">
+                        <i class="fa-solid fa-download"></i> Download HTML
+                    </button>
+                    <button onclick="closeInvoicePreviewModal()" class="p-1.5 text-slate-400 hover:text-white cursor-pointer ml-1">
+                        <i class="fa-solid fa-xmark text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Printable Invoice Sheet -->
+            <div class="overflow-y-auto p-6 sm:p-10 bg-white flex-1" id="printable-invoice-area">
+                <!-- Populated dynamically via JS -->
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 4: ADD / EDIT PRODUCT OR SERVICE MODAL              -->
+    <!-- ========================================================= -->
+    <div id="product-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base">Add Product / Billable Service</h3>
+                <button onclick="closeProductModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="saveProduct(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Product / Service Name *</label>
+                    <input type="text" id="prod-name" required placeholder="e.g., Full-Stack AI Web App Retainer" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+                        <select id="prod-category" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                            <option value="SaaS / Software">SaaS / Software</option>
+                            <option value="Consulting">Consulting</option>
+                            <option value="Design & Creative">Design & Creative</option>
+                            <option value="Marketing">Marketing</option>
+                            <option value="Hardware / Goods">Hardware / Goods</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Unit Price (Base ₹) *</label>
+                        <input type="number" id="prod-price" required min="1" step="any" placeholder="25000" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <div class="flex items-center justify-between mb-1">
+                        <label class="text-xs font-semibold text-slate-700">Description / Value Proposition</label>
+                        <button type="button" onclick="aiGenerateProductDescriptionInModal()" class="text-[11px] font-semibold text-purple-600 hover:text-purple-800 flex items-center gap-1 cursor-pointer">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> AI Write Pitch
+                        </button>
+                    </div>
+                    <textarea id="prod-desc" rows="3" placeholder="Includes architecture design, cloud deployment, and priority SLA support." class="w-full rounded-xl border border-slate-200 p-3 text-xs focus:outline-none focus:border-indigo-500"></textarea>
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeProductModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm cursor-pointer">Save Catalog Item</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 5: RECORD EXPENSE MODAL                             -->
+    <!-- ========================================================= -->
+    <div id="expense-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base">Log Operating Expense</h3>
+                <button onclick="closeExpenseModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="saveExpense(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Expense Title / Vendor *</label>
+                    <input type="text" id="exp-title" required placeholder="e.g., AWS Cloud Infrastructure" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Category</label>
+                        <select id="exp-category" class="w-full rounded-xl border border-slate-200 px-3 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                            <option value="Cloud & SaaS">Cloud & SaaS</option>
+                            <option value="Payroll & Contractors">Payroll & Contractors</option>
+                            <option value="Marketing & Ads">Marketing & Ads</option>
+                            <option value="Office & Operations">Office & Operations</option>
+                            <option value="Taxes & Legal">Taxes & Legal</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-slate-700 mb-1">Amount (Base ₹) *</label>
+                        <input type="number" id="exp-amount" required min="1" step="any" placeholder="14500" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Date</label>
+                    <input type="date" id="exp-date" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeExpenseModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-sm cursor-pointer">Record Expense</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- MODAL 6: BUSINESS SETTINGS & UPI CONFIGURATION            -->
+    <!-- ========================================================= -->
+    <div id="settings-modal" class="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-xs hidden items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-200 overflow-hidden">
+            <div class="px-6 py-4 bg-slate-900 text-white flex items-center justify-between">
+                <h3 class="font-bold text-base">Merchant Profile & Payment Rail Settings</h3>
+                <button onclick="closeBusinessSettingsModal()" class="text-slate-400 hover:text-white cursor-pointer">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form onsubmit="saveBusinessSettings(event)" class="p-6 space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Business Legal Name *</label>
+                    <input type="text" id="set-biz-name" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Merchant UPI ID (VPA for QR Generation) *</label>
+                    <input type="text" id="set-biz-upi" required class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm font-mono focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">GSTIN / Tax Registration Number</label>
+                    <input type="text" id="set-biz-gst" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm font-mono focus:outline-none focus:border-indigo-500">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-slate-700 mb-1">Registered Office Address</label>
+                    <input type="text" id="set-biz-address" class="w-full rounded-xl border border-slate-200 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:border-indigo-500">
+                </div>
+                <div class="pt-2 flex justify-end gap-2">
+                    <button type="button" onclick="closeBusinessSettingsModal()" class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50 cursor-pointer">Cancel</button>
+                    <button type="submit" class="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm cursor-pointer">Save Profile</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================= -->
+    <!-- APPLICATION LOGIC & GEMINI AI INTEGRATION                 -->
+    <!-- ========================================================= -->
+    <script>
+        /**************************************************************
+         * 1. STATE MANAGEMENT & REALISTIC INITIAL BUSINESS DATASET
+         **************************************************************/
+        const EXCHANGE_RATE_INR_TO_USD = 84.0; // ₹84 = $1 USD for live toggle conversion
+
+        let appState = {
+            currency: 'INR', // 'INR' or 'USD'
+            invoiceFilter: 'ALL',
+            activeCheckoutInvoiceId: null,
+            activePreviewInvoiceId: null,
+            business: {
+                name: 'Apex Ventures Pvt Ltd',
+                upiId: 'apexventures@okicici',
+                gstin: '29AABCA8921K1Z5',
+                address: 'Level 4, Prestige Tech Park, Outer Ring Rd, Bengaluru 560103',
+                email: 'finance@apexventures.in'
+            },
+            products: [
+                {
+                    id: 'PRD-01',
+                    name: 'Enterprise AI Automation Suite',
+                    category: 'SaaS / Software',
+                    price: 85000,
+                    description: 'Custom LLM workflow integration, automated document triage, and 24/7 SLA cloud hosting.'
+                },
+                {
+                    id: 'PRD-02',
+                    name: 'Fintech Payment Gateway Integration',
+                    category: 'Consulting',
+                    price: 45000,
+                    description: 'End-to-end UPI QR, webhook reconciliation, and automated GST invoicing setup.'
+                },
+                {
+                    id: 'PRD-03',
+                    name: 'UI/UX Design System & Mobile Revamp',
+                    category: 'Design & Creative',
+                    price: 60000,
+                    description: 'Complete Figma component library, interactive prototypes, and conversion audit.'
+                },
+                {
+                    id: 'PRD-04',
+                    name: 'Monthly Cloud & Security Retainer',
+                    category: 'SaaS / Software',
+                    price: 28000,
+                    description: 'Continuous uptime monitoring, automated backups, penetration testing, and DevOps support.'
+                },
+                {
+                    id: 'PRD-05',
+                    name: 'Performance Growth Marketing Sprint',
+                    category: 'Marketing',
+                    price: 35000,
+                    description: 'High-intent B2B lead generation campaigns, landing page optimization, and analytics.'
+                }
+            ],
+            invoices: [
+                {
+                    id: 'INV-2026-101',
+                    clientName: 'Veridian Dynamics India',
+                    clientEmail: 'accounts@veridiandynamics.in',
+                    clientPhone: '+91 98201 44510',
+                    clientAddress: 'Bandra Kurla Complex, Mumbai • GSTIN: 27AAACV1234F1Z2',
+                    issueDate: '2026-09-25',
+                    dueDate: '2026-10-10',
+                    status: 'Paid',
+                    paymentMethod: 'UPI Instant QR',
+                    taxRate: 18,
+                    discount: 5000,
+                    notes: 'Thank you for partnering with Apex Ventures! Settled via corporate UPI.',
+                    items: [
+                        { description: 'Enterprise AI Automation Suite', qty: 1, price: 85000 },
+                        { description: 'Fintech Payment Gateway Integration', qty: 1, price: 45000 }
+                    ]
+                },
+                {
+                    id: 'INV-2026-102',
+                    clientName: 'NovaCare Health Systems',
+                    clientEmail: 'finance@novacare.io',
+                    clientPhone: '+91 98450 99123',
+                    clientAddress: 'HITEC City, Hyderabad • GSTIN: 36AABCN8821M1Z9',
+                    issueDate: '2026-10-01',
+                    dueDate: '2026-10-12',
+                    status: 'Overdue',
+                    paymentMethod: 'Unpaid',
+                    taxRate: 18,
+                    discount: 0,
+                    notes: 'Immediate settlement requested. Scan the UPI QR code on this invoice for instant confirmation.',
+                    items: [
+                        { description: 'UI/UX Design System & Mobile Revamp', qty: 1, price: 60000 },
+                        { description: 'Monthly Cloud & Security Retainer', qty: 2, price: 28000 }
+                    ]
+                },
+                {
+                    id: 'INV-2026-103',
+                    clientName: 'Kinetix Logistics Global',
+                    clientEmail: 'ap@kinetixglobal.com',
+                    clientPhone: '+91 97112 63009',
+                    clientAddress: 'Cyber Hub, Gurugram • GSTIN: 06AAACK5519P1Z4',
+                    issueDate: '2026-10-08',
+                    dueDate: '2026-10-25',
+                    status: 'Pending',
+                    paymentMethod: 'Unpaid',
+                    taxRate: 18,
+                    discount: 2000,
+                    notes: 'Milestone 1 delivery completed. Please remit via UPI or Corporate Card.',
+                    items: [
+                        { description: 'Enterprise AI Automation Suite', qty: 1, price: 85000 }
+                    ]
+                },
+                {
+                    id: 'INV-2026-104',
+                    clientName: 'Solstice Retail Ventures',
+                    clientEmail: 'founder@solsticeretail.in',
+                    clientPhone: '+91 99001 77231',
+                    clientAddress: 'Indiranagar, Bengaluru • GSTIN: 29AABCS4410Q1Z1',
+                    issueDate: '2026-10-04',
+                    dueDate: '2026-10-15',
+                    status: 'Paid',
+                    paymentMethod: 'Corporate Card',
+                    taxRate: 18,
+                    discount: 0,
+                    notes: 'Paid in full via NexusPay Checkout.',
+                    items: [
+                        { description: 'Performance Growth Marketing Sprint', qty: 2, price: 35000 },
+                        { description: 'Fintech Payment Gateway Integration', qty: 1, price: 45000 }
+                    ]
+                },
+                {
+                    id: 'INV-2026-105',
+                    clientName: 'Zenith EdTech Labs',
+                    clientEmail: 'billing@zenithed.org',
+                    clientPhone: '+91 98119 52040',
+                    clientAddress: 'Salt Lake Sector V, Kolkata • GSTIN: 19AAACZ9012L1Z7',
+                    issueDate: '2026-10-14',
+                    dueDate: '2026-10-29',
+                    status: 'Pending',
+                    paymentMethod: 'Unpaid',
+                    taxRate: 18,
+                    discount: 0,
+                    notes: 'Q4 Annual Cloud Retainer & Security Audit.',
+                    items: [
+                        { description: 'Monthly Cloud & Security Retainer', qty: 3, price: 28000 }
+                    ]
+                }
+            ],
+            expenses: [
+                { id: 'EXP-01', title: 'AWS & GPU Cloud Cluster', category: 'Cloud & SaaS', amount: 34500, date: '2026-10-02' },
+                { id: 'EXP-02', title: 'Contractor Frontend Engineering', category: 'Payroll & Contractors', amount: 52000, date: '2026-10-05' },
+                { id: 'EXP-03', title: 'LinkedIn & Google B2B Demand Ads', category: 'Marketing & Ads', amount: 21000, date: '2026-10-09' },
+                { id: 'EXP-04', title: 'Workspace Lease & High-Speed Fiber', category: 'Office & Operations', amount: 18500, date: '2026-10-11' }
+            ],
+            settlements: [
+                { id: 'UTR-628910429', invoiceId: 'INV-2026-101', client: 'Veridian Dynamics India', amount: 148400, method: 'UPI Instant QR', date: '2026-10-06 14:22' },
+                { id: 'UTR-629448103', invoiceId: 'INV-2026-104', client: 'Solstice Retail Ventures', amount: 135700, method: 'Corporate Card', date: '2026-10-12 18:05' }
+            ],
+            chatHistory: [
+                {
+                    role: 'ai',
+                    text: "Hello! I'm your **NexusPay Gemini CFO**. I have real-time visibility into your invoices, product catalog, and expenses. Ask me how to accelerate overdue collections, optimize pricing, or improve your net margin!"
+                }
+            ]
+        };
+
+        // Load from localStorage if available
+        function loadSavedState() {
+            try {
+                const saved = localStorage.getItem('nexuspay_ai_state_v1');
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    appState = { ...appState, ...parsed };
+                }
+            } catch (e) {
+                console.warn('Could not load state from storage:', e);
+            }
+        }
+
+        function persistState() {
+            try {
+                localStorage.setItem('nexuspay_ai_state_v1', JSON.stringify(appState));
+            } catch (e) {
+                console.warn('Could not persist state:', e);
+            }
+        }
+
+        /**************************************************************
+         * 2. CURRENCY FORMATTING & CALCULATIONS (INR ₹ / USD $)
+         **************************************************************/
+        function getCurrencySymbol() {
+            return appState.currency === 'INR' ? '₹' : '$';
+        }
+
+        function convertFromBaseINR(amountInINR) {
+            const num = Number(amountInINR) || 0;
+            return appState.currency === 'INR' ? num : num / EXCHANGE_RATE_INR_TO_USD;
+        }
+
+        function formatMoney(amountInINR, showDecimals = false) {
+            const converted = convertFromBaseINR(amountInINR);
+            const locale = appState.currency === 'INR' ? 'en-IN' : 'en-US';
+            return new Intl.NumberFormat(locale, {
+                style: 'currency',
+                currency: appState.currency,
+                minimumFractionDigits: showDecimals ? 2 : 0,
+                maximumFractionDigits: showDecimals ? 2 : 0
+            }).format(converted);
+        }
+
+        function calculateInvoiceBreakdown(inv) {
+            const subtotal = (inv.items || []).reduce((acc, item) => acc + (Number(item.qty) * Number(item.price)), 0);
+            const discount = Number(inv.discount) || 0;
+            const taxable = Math.max(0, subtotal - discount);
+            const taxAmount = taxable * ((Number(inv.taxRate) || 0) / 100);
+            const total = taxable + taxAmount;
+            return { subtotal, discount, taxable, taxAmount, total };
+        }
+
+        function computeBusinessSummary() {
+            let totalRevenue = 0;
+            let paidCount = 0;
+            let pendingTotal = 0;
+            let pendingCount = 0;
+            let overdueTotal = 0;
+            let overdueCount = 0;
+
+            appState.invoices.forEach(inv => {
+                const { total } = calculateInvoiceBreakdown(inv);
+                if (inv.status === 'Paid') {
+                    totalRevenue += total;
+                    paidCount++;
+                } else if (inv.status === 'Pending') {
+                    pendingTotal += total;
+                    pendingCount++;
+                } else if (inv.status === 'Overdue') {
+                    pendingTotal += total;
+                    overdueTotal += total;
+                    pendingCount++;
+                    overdueCount++;
+                }
+            });
+
+            const totalExpenses = appState.expenses.reduce((acc, exp) => acc + Number(exp.amount), 0);
+            const netProfit = totalRevenue - totalExpenses;
+            const profitMargin = totalRevenue > 0 ? Math.round((netProfit / totalRevenue) * 100) : 0;
+
+            return {
+                totalRevenue,
+                paidCount,
+                pendingTotal,
+                pendingCount,
+                overdueTotal,
+                overdueCount,
+                totalExpenses,
+                netProfit,
+                profitMargin
+            };
+        }
+
+        function setCurrency(curr) {
+            appState.currency = curr;
+            persistState();
+
+            // Update desktop buttons
+            const btnInr = document.getElementById('btn-curr-inr');
+            const btnUsd = document.getElementById('btn-curr-usd');
+            if (curr === 'INR') {
+                btnInr.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer bg-white text-slate-900 shadow-xs';
+                btnUsd.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-slate-600 hover:text-slate-900';
+            } else {
+                btnUsd.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer bg-white text-slate-900 shadow-xs';
+                btnInr.className = 'px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer text-slate-600 hover:text-slate-900';
+            }
+
+            // Update mobile badge
+            const mobileBadge = document.getElementById('mobile-currency-badge');
+            if (mobileBadge) mobileBadge.textContent = curr === 'INR' ? '₹ INR' : '$ USD';
+
+            // Update all currency symbols
+            document.querySelectorAll('.curr-symbol').forEach(el => {
+                el.textContent = getCurrencySymbol();
+            });
+
+            refreshAllViews();
+            showToast(`Currency switched to ${curr === 'INR' ? 'Indian Rupee (₹)' : 'US Dollar ($)'}`, 'info');
+        }
+
+        function toggleCurrency() {
+            setCurrency(appState.currency === 'INR' ? 'USD' : 'INR');
+        }
+
+        /**************************************************************
+         * 3. NAVIGATION & UI HELPERS
+         **************************************************************/
+        const TAB_META = {
+            'dashboard': {
+                title: 'Business Dashboard',
+                subtitle: 'Real-time revenue metrics, payment velocity, and AI cash-flow insights'
+            },
+            'invoices': {
+                title: 'Invoicing & Payment Gateway',
+                subtitle: 'Create GST/Tax invoices, generate UPI QR codes, and simulate instant client checkouts'
+            },
+            'catalog': {
+                title: 'Product & Service Catalog',
+                subtitle: 'Manage standardized offerings for 1-click invoice addition and AI pitch generation'
+            },
+            'expenses': {
+                title: 'Expenses & Settlement Ledger',
+                subtitle: 'Monitor operating outflows alongside verified payment gateway settlements'
+            },
+            'ai-assistant': {
+                title: 'Gemini AI CFO & Copywriting Studio',
+                subtitle: 'Live financial diagnostics, automated WhatsApp/Email payment reminders, and strategy chat'
+            }
+        };
+
+        function switchTab(tabId) {
+            const tabs = ['dashboard', 'invoices', 'catalog', 'expenses', 'ai-assistant'];
+            tabs.forEach(t => {
+                const viewEl = document.getElementById(`view-${t}`);
+                const navEl = document.getElementById(`nav-${t}`);
+                if (t === tabId) {
+                    viewEl.classList.remove('hidden');
+                    navEl.className = 'nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium transition cursor-pointer bg-indigo-600/15 text-white border border-indigo-500/30';
+                } else {
+                    viewEl.classList.add('hidden');
+                    navEl.className = 'nav-btn w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/60 transition cursor-pointer';
+                }
+            });
+
+            if (TAB_META[tabId]) {
+                document.getElementById('page-title').textContent = TAB_META[tabId].title;
+                document.getElementById('page-subtitle').textContent = TAB_META[tabId].subtitle;
+            }
+
+            // Close mobile sidebar if open
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            if (!sidebar.classList.contains('-translate-x-full')) {
+                sidebar.classList.add('-translate-x-full');
+                backdrop.classList.add('hidden');
+            }
+
+            if (tabId === 'dashboard') {
+                updateCharts();
+            }
+        }
+
+        function toggleMobileSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const backdrop = document.getElementById('sidebar-backdrop');
+            sidebar.classList.toggle('-translate-x-full');
+            backdrop.classList.toggle('hidden');
+        }
+
+        function showToast(message, type = 'success') {
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
+            const colors = {
+                success: 'bg-slate-900 text-white border-emerald-500/40',
+                info: 'bg-slate-900 text-white border-indigo-500/40',
+                warning: 'bg-slate-900 text-white border-amber-500/40'
+            };
+            const icons = {
+                success: '<i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>',
+                info: '<i class="fa-solid fa-wand-magic-sparkles text-indigo-400 text-base"></i>',
+                warning: '<i class="fa-solid fa-triangle-exclamation text-amber-400 text-base"></i>'
+            };
+
+            toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl shadow-xl border ${colors[type] || colors.success} text-xs font-medium transition-all duration-300 transform translate-y-0 opacity-100`;
+            toast.innerHTML = `
+                ${icons[type] || icons.success}
+                <span class="flex-1 leading-snug">${message}</span>
+            `;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.classList.add('opacity-0', 'translate-y-2');
+                setTimeout(() => toast.remove(), 300);
+            }, 3400);
+        }
+
+        function copyTextToClipboard(text, successMsg = 'Copied to clipboard!') {
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            textarea.style.position = 'fixed';
+            textarea.style.opacity = '0';
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                showToast(successMsg, 'success');
+            } catch (err) {
+                showToast('Could not copy automatically.', 'warning');
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function copyTextValue(elementId, successMsg) {
+            const el = document.getElementById(elementId);
+            if (el && el.value) {
+                copyTextToClipboard(el.value, successMsg);
+            }
+        }
+
+        /**************************************************************
+         * 4. DASHBOARD RENDERING & CHARTS
+         **************************************************************/
+        let cashflowChartInstance = null;
+        let paymentMethodsChartInstance = null;
+
+        function renderDashboard() {
+            const summary = computeBusinessSummary();
+
+            document.getElementById('kpi-revenue').textContent = formatMoney(summary.totalRevenue);
+            document.getElementById('kpi-revenue-sub').textContent = `Across ${summary.paidCount} paid invoices`;
+
+            document.getElementById('kpi-pending').textContent = formatMoney(summary.pendingTotal);
+            document.getElementById('kpi-overdue-badge').textContent = `${summary.overdueCount} Overdue`;
+            document.getElementById('kpi-pending-sub').textContent = `${summary.pendingCount} open invoices`;
+
+            document.getElementById('kpi-expenses').textContent = formatMoney(summary.totalExpenses);
+            document.getElementById('kpi-expenses-sub').textContent = `${appState.expenses.length} recorded outflows`;
+
+            document.getElementById('kpi-profit').textContent = formatMoney(summary.netProfit);
+            document.getElementById('kpi-margin-badge').textContent = `${summary.profitMargin}% Margin`;
+
+            // Sidebar badges
+            document.getElementById('sidebar-pending-count').textContent = summary.pendingCount;
+            document.getElementById('sidebar-catalog-count').textContent = appState.products.length;
+            document.getElementById('sidebar-biz-name').textContent = appState.business.name;
+            document.getElementById('sidebar-biz-upi').textContent = appState.business.upiId;
+
+            // Update Executive AI Brief Banner
+            const overdueInvs = appState.invoices.filter(i => i.status === 'Overdue');
+            const briefEl = document.getElementById('dashboard-ai-brief');
+            if (overdueInvs.length > 0) {
+                const topOverdue = overdueInvs[0];
+                const topOverdueAmt = formatMoney(calculateInvoiceBreakdown(topOverdue).total);
+                briefEl.innerHTML = `Your net profit margin stands at <strong>${summary.profitMargin}%</strong> (${formatMoney(summary.netProfit)}). Priority action: Collect <strong>${topOverdueAmt}</strong> overdue from <strong>${topOverdue.clientName}</strong> (${topOverdue.id}) via UPI QR or send an AI WhatsApp reminder to boost cash liquidity by ${Math.round((calculateInvoiceBreakdown(topOverdue).total / Math.max(1, summary.totalRevenue)) * 100)}%.`;
+            } else {
+                briefEl.innerHTML = `Zero overdue invoices! You have collected <strong>${formatMoney(summary.totalRevenue)}</strong> with a healthy <strong>${summary.profitMargin}%</strong> net margin. Consider bundling your top catalog services to convert the remaining ${formatMoney(summary.pendingTotal)} in pending receivables.`;
+            }
+
+            // Recent Transactions Feed
+            const txContainer = document.getElementById('dashboard-recent-tx');
+            const combinedFeed = [
+                ...appState.settlements.map(s => ({
+                    type: 'INFLOW',
+                    title: s.client,
+                    subtitle: `${s.invoiceId} • ${s.method}`,
+                    amount: s.amount,
+                    date: s.date
+                })),
+                ...appState.expenses.map(e => ({
+                    type: 'OUTFLOW',
+                    title: e.title,
+                    subtitle: `Expense • ${e.category}`,
+                    amount: e.amount,
+                    date: e.date
+                }))
+            ].slice(0, 5);
+
+            txContainer.innerHTML = combinedFeed.map(item => `
+                <div class="p-4 flex items-center justify-between hover:bg-slate-50/80 transition">
+                    <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${item.type === 'INFLOW' ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}">
+                            <i class="fa-solid ${item.type === 'INFLOW' ? 'fa-arrow-down-left' : 'fa-arrow-up-right'} text-xs"></i>
+                        </div>
+                        <div class="truncate">
+                            <p class="text-xs sm:text-sm font-semibold text-slate-900 truncate">${item.title}</p>
+                            <p class="text-[11px] text-slate-500">${item.subtitle}</p>
+                        </div>
+                    </div>
+                    <div class="text-right shrink-0 ml-2">
+                        <p class="text-xs sm:text-sm font-bold ${item.type === 'INFLOW' ? 'text-emerald-600' : 'text-rose-600'}">
+                            ${item.type === 'INFLOW' ? '+' : '-'}${formatMoney(item.amount)}
+                        </p>
+                        <p class="text-[10px] text-slate-400">${item.date}</p>
+                    </div>
+                </div>
+            `).join('');
+
+            // Pending & Overdue Invoices Quick Action List
+            const pendingContainer = document.getElementById('dashboard-pending-invoices');
+            const unpaidInvoices = appState.invoices.filter(i => i.status !== 'Paid');
+            if (unpaidInvoices.length === 0) {
+                pendingContainer.innerHTML = `
+                    <div class="p-8 text-center text-slate-400">
+                        <i class="fa-solid fa-circle-check text-emerald-500 text-2xl mb-2"></i>
+                        <p class="text-xs font-medium text-slate-600">All invoices are settled!</p>
+                    </div>
+                `;
+            } else {
+                pendingContainer.innerHTML = unpaidInvoices.map(inv => {
+                    const { total } = calculateInvoiceBreakdown(inv);
+                    const isOverdue = inv.status === 'Overdue';
+                    return `
+                        <div class="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50/80 transition">
+                            <div>
+                                <div class="flex items-center gap-2">
+                                    <span class="font-bold text-xs sm:text-sm text-slate-900">${inv.clientName}</span>
+                                    <span class="text-[10px] font-semibold px-2 py-0.5 rounded-full ${isOverdue ? 'bg-rose-100 text-rose-700' : 'bg-amber-100 text-amber-700'}">
+                                        ${inv.status}
+                                    </span>
+                                </div>
+                                <p class="text-[11px] text-slate-500 mt-0.5">${inv.id} • Due ${inv.dueDate}</p>
+                            </div>
+                            <div class="flex items-center justify-between sm:justify-end gap-2.5">
+                                <span class="font-extrabold text-sm text-slate-900">${formatMoney(total)}</span>
+                                <button onclick="openCheckoutModal('${inv.id}')" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1.5">
+                                    <i class="fa-solid fa-qrcode"></i> Collect
+                                </button>
+                                <button onclick="quickAiRemindInvoice('${inv.id}')" title="Generate AI Payment Reminder" class="p-1.5 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 transition cursor-pointer">
+                                    <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            }
+
+            updateCharts();
+        }
+
+        function updateCharts() {
+            const summary = computeBusinessSummary();
+            const rate = appState.currency === 'INR' ? 1 : (1 / EXCHANGE_RATE_INR_TO_USD);
+
+            // 6-Month Historical + Current Trajectory
+            const months = ['May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct (Live)'];
+            const revSeries = [165000, 198000, 224000, 210000, 265000, summary.totalRevenue].map(v => Math.round(v * rate));
+            const expSeries = [92000, 104000, 112000, 108000, 119000, summary.totalExpenses].map(v => Math.round(v * rate));
+
+            const ctxCash = document.getElementById('cashflowChart');
+            if (ctxCash) {
+                if (cashflowChartInstance) cashflowChartInstance.destroy();
+                cashflowChartInstance = new Chart(ctxCash, {
+                    type: 'bar',
+                    data: {
+                        labels: months,
+                        datasets: [
+                            {
+                                label: `Revenue (${getCurrencySymbol()})`,
+                                data: revSeries,
+                                backgroundColor: '#4f46e5',
+                                borderRadius: 8,
+                                barPercentage: 0.65
+                            },
+                            {
+                                label: `Expenses (${getCurrencySymbol()})`,
+                                data: expSeries,
+                                backgroundColor: '#fb7185',
+                                borderRadius: 8,
+                                barPercentage: 0.65
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#f1f5f9' },
+                                ticks: {
+                                    font: { family: 'Inter', size: 11 },
+                                    callback: function(val) {
+                                        return getCurrencySymbol() + val.toLocaleString();
+                                    }
+                                }
+                            },
+                            x: {
+                                grid: { display: false },
+                                ticks: { font: { family: 'Inter', size: 11 } }
+                            }
+                        }
+                    }
+                });
+            }
+
+            // Payment Methods Doughnut Chart
+            const methodCounts = {
+                'UPI Instant QR': 0,
+                'Corporate Card': 0,
+                'Payment Link': 0
+            };
+            appState.settlements.forEach(s => {
+                methodCounts[s.method] = (methodCounts[s.method] || 0) + s.amount;
+            });
+
+            const labels = Object.keys(methodCounts);
+            const values = labels.map(l => Math.round(methodCounts[l] * rate));
+            const totalSettled = values.reduce((a, b) => a + b, 0) || 1;
+
+            const ctxMethod = document.getElementById('paymentMethodsChart');
+            if (ctxMethod) {
+                if (paymentMethodsChartInstance) paymentMethodsChartInstance.destroy();
+                paymentMethodsChartInstance = new Chart(ctxMethod, {
+                    type: 'doughnut',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            data: values.every(v => v === 0) ? [60, 30, 10] : values,
+                            backgroundColor: ['#10b981', '#4f46e5', '#a855f7'],
+                            borderWidth: 0,
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        cutout: '72%',
+                        plugins: {
+                            legend: { display: false }
+                        }
+                    }
+                });
+            }
+
+            // Render custom legend
+            const colors = ['bg-emerald-500', 'bg-indigo-600', 'bg-purple-500'];
+            const legendEl = document.getElementById('channel-legend');
+            if (legendEl) {
+                legendEl.innerHTML = labels.map((label, idx) => {
+                    const pct = Math.round((values[idx] / totalSettled) * 100);
+                    return `
+                        <div class="flex items-center justify-between">
+                            <span class="flex items-center gap-2 text-slate-600">
+                                <span class="w-2.5 h-2.5 rounded-full ${colors[idx]}"></span>
+                                ${label}
+                            </span>
+                            <span class="font-bold text-slate-800">${pct}% (${formatMoney(methodCounts[label] || 0)})</span>
+                        </div>
+                    `;
+                }).join('');
+            }
+        }
+
+        /**************************************************************
+         * 5. INVOICING SYSTEM & PRINTABLE INVOICE VIEW
+         **************************************************************/
+        function filterInvoices(status) {
+            appState.invoiceFilter = status;
+            ['ALL', 'Paid', 'Pending', 'Overdue'].forEach(st => {
+                const btn = document.getElementById(`inv-filter-${st}`);
+                if (btn) {
+                    btn.className = st === status
+                        ? 'inv-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-white transition cursor-pointer'
+                        : 'inv-filter-btn px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 transition cursor-pointer';
+                }
+            });
+            renderInvoicesTable();
+        }
+
+        function renderInvoicesTable() {
+            const tbody = document.getElementById('invoices-table-body');
+            const query = (document.getElementById('invoice-search')?.value || '').toLowerCase();
+
+            const filtered = appState.invoices.filter(inv => {
+                const matchesStatus = appState.invoiceFilter === 'ALL' || inv.status === appState.invoiceFilter;
+                const matchesQuery = !query ||
+                    inv.id.toLowerCase().includes(query) ||
+                    inv.clientName.toLowerCase().includes(query) ||
+                    inv.clientEmail.toLowerCase().includes(query);
+                return matchesStatus && matchesQuery;
+            });
+
+            if (filtered.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-12 text-center text-slate-400 text-xs">
+                            No matching invoices found. Click "Create Invoice" to bill a client.
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+
+            tbody.innerHTML = filtered.map(inv => {
+                const { total, taxAmount } = calculateInvoiceBreakdown(inv);
+                const statusBadge = {
+                    'Paid': 'bg-emerald-50 text-emerald-700 border-emerald-200',
+                    'Pending': 'bg-amber-50 text-amber-700 border-amber-200',
+                    'Overdue': 'bg-rose-50 text-rose-700 border-rose-200'
+                }[inv.status] || 'bg-slate-100 text-slate-700';
+
+                return `
+                    <tr class="hover:bg-slate-50/90 transition">
+                        <td class="py-4 px-5 font-mono text-xs font-bold text-indigo-600">
+                            <button onclick="openInvoicePreviewModal('${inv.id}')" class="hover:underline cursor-pointer">${inv.id}</button>
+                        </td>
+                        <td class="py-4 px-5">
+                            <p class="font-bold text-slate-900 text-xs sm:text-sm">${inv.clientName}</p>
+                            <p class="text-[11px] text-slate-500">${inv.clientEmail}</p>
+                        </td>
+                        <td class="py-4 px-5 text-xs text-slate-600">
+                            <p>Issued: ${inv.issueDate}</p>
+                            <p class="font-medium ${inv.status === 'Overdue' ? 'text-rose-600' : 'text-slate-500'}">Due: ${inv.dueDate}</p>
+                        </td>
+                        <td class="py-4 px-5">
+                            <p class="font-extrabold text-slate-900 text-sm">${formatMoney(total)}</p>
+                            <p class="text-[10px] text-slate-400">Incl. ${formatMoney(taxAmount)} Tax</p>
+                        </td>
+                        <td class="py-4 px-5">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${statusBadge}">
+                                <span class="w-1.5 h-1.5 rounded-full ${inv.status === 'Paid' ? 'bg-emerald-500' : inv.status === 'Overdue' ? 'bg-rose-500' : 'bg-amber-500'}"></span>
+                                ${inv.status}
+                            </span>
+                        </td>
+                        <td class="py-4 px-5 text-right">
+                            <div class="flex items-center justify-end gap-1.5">
+                                ${inv.status !== 'Paid' ? `
+                                    <button onclick="openCheckoutModal('${inv.id}')" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1 shadow-2xs" title="Open UPI QR & Card Checkout">
+                                        <i class="fa-solid fa-qrcode"></i> Pay / QR
+                                    </button>
+                                    <button onclick="quickAiRemindInvoice('${inv.id}')" class="p-2 rounded-lg bg-purple-50 hover:bg-purple-100 text-purple-600 transition cursor-pointer" title="AI Payment Reminder">
+                                        <i class="fa-solid fa-wand-magic-sparkles text-xs"></i>
+                                    </button>
+                                ` : `
+                                    <span class="text-[11px] text-slate-400 font-medium mr-2"><i class="fa-solid fa-check-double text-emerald-500"></i> ${inv.paymentMethod || 'Settled'}</span>
+                                `}
+                                <button onclick="openInvoicePreviewModal('${inv.id}')" class="p-2 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition cursor-pointer" title="View & Print Clean Invoice">
+                                    <i class="fa-solid fa-print text-xs"></i>
+                                </button>
+                                <button onclick="deleteInvoice('${inv.id}')" class="p-2 rounded-lg border border-slate-200 hover:bg-rose-50 hover:text-rose-600 text-slate-400 transition cursor-pointer" title="Delete Invoice">
+                                    <i class="fa-solid fa-trash-can text-xs"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // Invoice Builder Modal Logic
+        function populateCatalogPickerInModal() {
+            const picker = document.getElementById('inv-catalog-picker');
+            if (!picker) return;
+            picker.innerHTML = appState.products.map(p =>
+                `<option value="${p.id}">${p.name} — ${formatMoney(p.price)}</option>`
+            ).join('');
+        }
+
+        function openInvoiceModal(prefillProductId = null) {
+            populateCatalogPickerInModal();
+            document.getElementById('inv-edit-id').value = '';
+            document.getElementById('inv-client-name').value = '';
+            document.getElementById('inv-client-email').value = '';
+            document.getElementById('inv-client-phone').value = '+91 ';
+            document.getElementById('inv-client-address').value = '';
+
+            const nextDue = new Date();
+            nextDue.setDate(nextDue.getDate() + 14);
+            document.getElementById('inv-due-date').value = nextDue.toISOString().split('T')[0];
+            document.getElementById('inv-status').value = 'Pending';
+            document.getElementById('inv-tax-rate').value = 18;
+            document.getElementById('inv-discount').value = 0;
+            document.getElementById('inv-notes').value = 'Thank you for your business! Please scan the UPI QR code or use the checkout link to settle within 14 days.';
+
+            const tbody = document.getElementById('inv-items-tbody');
+            tbody.innerHTML = '';
+
+            if (prefillProductId) {
+                const prod = appState.products.find(p => p.id === prefillProductId);
+                if (prod) {
+                    appendInvoiceItemRow(prod.name, 1, prod.price);
+                }
+            } else {
+                appendInvoiceItemRow('Enterprise AI Consulting & Implementation', 1, 45000);
+            }
+
+            recalcInvoiceFormTotals();
+            const modal = document.getElementById('invoice-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInvoiceModal() {
+            const modal = document.getElementById('invoice-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function appendInvoiceItemRow(desc = '', qty = 1, priceINR = 10000) {
+            const tbody = document.getElementById('inv-items-tbody');
+            const tr = document.createElement('tr');
+            tr.className = 'inv-item-row';
+            tr.innerHTML = `
+                <td class="p-2">
+                    <input type="text" value="${desc}" placeholder="Item or service description" class="inv-row-desc w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs focus:outline-none focus:border-indigo-500">
+                </td>
+                <td class="p-2">
+                    <input type="number" value="${qty}" min="1" oninput="recalcInvoiceFormTotals()" class="inv-row-qty w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs text-center focus:outline-none focus:border-indigo-500">
+                </td>
+                <td class="p-2">
+                    <input type="number" value="${priceINR}" min="0" step="any" oninput="recalcInvoiceFormTotals()" class="inv-row-price w-full rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs text-right focus:outline-none focus:border-indigo-500">
+                </td>
+                <td class="p-2 text-right font-semibold text-xs text-slate-800 inv-row-total">
+                    ${formatMoney(qty * priceINR)}
+                </td>
+                <td class="p-2 text-center">
+                    <button type="button" onclick="this.closest('tr').remove(); recalcInvoiceFormTotals();" class="text-slate-400 hover:text-rose-500 cursor-pointer">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </td>
+            `;
+            tbody.appendChild(tr);
+            recalcInvoiceFormTotals();
+        }
+
+        function addBlankInvoiceRow() {
+            appendInvoiceItemRow('', 1, 15000);
+        }
+
+        function addCatalogItemToInvoiceForm() {
+            const picker = document.getElementById('inv-catalog-picker');
+            const prod = appState.products.find(p => p.id === picker.value);
+            if (prod) {
+                appendInvoiceItemRow(prod.name, 1, prod.price);
+                showToast(`Added "${prod.name}" to invoice items`, 'info');
+            }
+        }
+
+        function recalcInvoiceFormTotals() {
+            const rows = document.querySelectorAll('#inv-items-tbody .inv-item-row');
+            let subtotal = 0;
+            rows.forEach(row => {
+                const qty = Number(row.querySelector('.inv-row-qty').value) || 0;
+                const price = Number(row.querySelector('.inv-row-price').value) || 0;
+                const lineTotal = qty * price;
+                subtotal += lineTotal;
+                row.querySelector('.inv-row-total').textContent = formatMoney(lineTotal);
+            });
+
+            const taxRate = Number(document.getElementById('inv-tax-rate').value) || 0;
+            const discount = Number(document.getElementById('inv-discount').value) || 0;
+            const taxable = Math.max(0, subtotal - discount);
+            const grandTotal = taxable + (taxable * (taxRate / 100));
+
+            document.getElementById('inv-form-subtotal').textContent = formatMoney(subtotal);
+            document.getElementById('inv-form-grandtotal').textContent = formatMoney(grandTotal);
+        }
+
+        function saveInvoice() {
+            const clientName = document.getElementById('inv-client-name').value.trim();
+            const clientEmail = document.getElementById('inv-client-email').value.trim() || 'client@company.com';
+            const clientPhone = document.getElementById('inv-client-phone').value.trim();
+            const clientAddress = document.getElementById('inv-client-address').value.trim() || 'India';
+            const dueDate = document.getElementById('inv-due-date').value || '2026-10-30';
+            const status = document.getElementById('inv-status').value;
+            const taxRate = Number(document.getElementById('inv-tax-rate').value) || 0;
+            const discount = Number(document.getElementById('inv-discount').value) || 0;
+            const notes = document.getElementById('inv-notes').value.trim();
+
+            if (!clientName) {
+                showToast('Please enter a Client / Company Name.', 'warning');
+                return;
+            }
+
+            const items = [];
+            document.querySelectorAll('#inv-items-tbody .inv-item-row').forEach(row => {
+                const description = row.querySelector('.inv-row-desc').value.trim();
+                const qty = Number(row.querySelector('.inv-row-qty').value) || 1;
+                const price = Number(row.querySelector('.inv-row-price').value) || 0;
+                if (description && price > 0) {
+                    items.push({ description, qty, price });
+                }
+            });
+
+            if (items.length === 0) {
+                showToast('Please add at least one valid billable item.', 'warning');
+                return;
+            }
+
+            const newId = `INV-2026-${101 + appState.invoices.length}`;
+            const today = new Date().toISOString().split('T')[0];
+
+            const newInv = {
+                id: newId,
+                clientName,
+                clientEmail,
+                clientPhone,
+                clientAddress,
+                issueDate: today,
+                dueDate,
+                status,
+                paymentMethod: status === 'Paid' ? 'Manual Entry' : 'Unpaid',
+                taxRate,
+                discount,
+                notes,
+                items
+            };
+
+            appState.invoices.unshift(newInv);
+            persistState();
+            closeInvoiceModal();
+            refreshAllViews();
+            showToast(`Invoice ${newId} created for ${clientName}!`, 'success');
+        }
+
+        function deleteInvoice(invId) {
+            appState.invoices = appState.invoices.filter(i => i.id !== invId);
+            persistState();
+            refreshAllViews();
+            showToast(`Invoice ${invId} removed.`, 'info');
+        }
+
+        /**************************************************************
+         * 6. DETERMINISTIC SVG UPI QR GENERATOR & CHECKOUT SIMULATOR
+         **************************************************************/
+        function generateDeterministicQrSvg(payloadString, size = 152) {
+            const cells = 21; // Version 1 QR Matrix (21x21)
+            const matrix = Array.from({ length: cells }, () => Array(cells).fill(0));
+
+            // Helper to draw standard 7x7 finder patterns
+            function drawFinder(r0, c0) {
+                for (let r = 0; r < 7; r++) {
+                    for (let c = 0; c < 7; c++) {
+                        if (r === 0 || r === 6 || c === 0 || c === 6 || (r >= 2 && r <= 4 && c >= 2 && c <= 4)) {
+                            matrix[r0 + r][c0 + c] = 1;
+                        } else {
+                            matrix[r0 + r][c0 + c] = 2; // reserved white
+                        }
+                    }
+                }
+            }
+
+            drawFinder(0, 0);
+            drawFinder(0, cells - 7);
+            drawFinder(cells - 7, 0);
+
+            // Timing patterns
+            for (let i = 8; i < cells - 8; i++) {
+                matrix[6][i] = i % 2 === 0 ? 1 : 2;
+                matrix[i][6] = i % 2 === 0 ? 1 : 2;
+            }
+
+            // Hash payloadString into deterministic modules
+            let hash = 2166136261;
+            for (let i = 0; i < payloadString.length; i++) {
+                hash ^= payloadString.charCodeAt(i);
+                hash = Math.imul(hash, 16777619);
+            }
+
+            for (let r = 0; r < cells; r++) {
+                for (let c = 0; c < cells; c++) {
+                    if (matrix[r][c] === 0) {
+                        // Exclude quiet separator zones around finders
+                        if ((r === 7 && c < 8) || (c === 7 && r < 8) ||
+                            (r === 7 && c >= cells - 8) || (c === cells - 8 && r < 8) ||
+                            (r === cells - 8 && c < 8) || (c === 7 && r >= cells - 8)) {
+                            matrix[r][c] = 0;
+                        } else {
+                            hash ^= (r * 31 + c * 17);
+                            hash = Math.imul(hash, 16777619);
+                            matrix[r][c] = (Math.abs(hash) % 10) < 5 ? 1 : 0;
+                        }
+                    }
+                }
+            }
+
+            const cellSize = size / cells;
+            let rects = '';
+            for (let r = 0; r < cells; r++) {
+                for (let c = 0; c < cells; c++) {
+                    if (matrix[r][c] === 1) {
+                        rects += `<rect x="${(c * cellSize).toFixed(2)}" y="${(r * cellSize).toFixed(2)}" width="${(cellSize + 0.35).toFixed(2)}" height="${(cellSize + 0.35).toFixed(2)}" fill="#0f172a" rx="1"/>`;
+                    }
+                }
+            }
+
+            return `
+                <svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" xmlns="http://www.w3.org/2000/svg">
+                    <rect width="${size}" height="${size}" fill="#ffffff"/>
+                    ${rects}
+                    <rect x="${size/2 - 16}" y="${size/2 - 16}" width="32" height="32" rx="6" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+                    <text x="${size/2}" y="${size/2 + 4}" text-anchor="middle" font-family="Inter, sans-serif" font-weight="800" font-size="10" fill="#4f46e5">UPI</text>
+                </svg>
+            `;
+        }
+
+        function openCheckoutModal(invId) {
+            const inv = appState.invoices.find(i => i.id === invId);
+            if (!inv) return;
+
+            appState.activeCheckoutInvoiceId = inv.id;
+            const { total } = calculateInvoiceBreakdown(inv);
+
+            document.getElementById('checkout-merchant-name').textContent = appState.business.name;
+            document.getElementById('checkout-inv-label').textContent = `${inv.id} • ${inv.clientName}`;
+            document.getElementById('checkout-amount-display').textContent = formatMoney(total, true);
+            document.getElementById('checkout-upi-id-display').textContent = `UPI ID: ${appState.business.upiId}`;
+
+            // Render dynamic UPI QR code
+            const upiUri = `upi://pay?pa=${encodeURIComponent(appState.business.upiId)}&pn=${encodeURIComponent(appState.business.name)}&am=${total}&tn=${encodeURIComponent(inv.id)}`;
+            document.getElementById('upi-qr-container').innerHTML = generateDeterministicQrSvg(upiUri, 152);
+
+            // Shareable link & message
+            const shareLink = `https://pay.nexuspay.ai/${inv.id.toLowerCase()}?amt=${Math.round(total)}`;
+            document.getElementById('checkout-share-url').value = shareLink;
+            generateCheckoutReminderText();
+
+            switchCheckoutTab('upi');
+            const modal = document.getElementById('checkout-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function openQuickPosCheckout() {
+            // Creates an instant walk-in POS invoice if needed or opens first unpaid invoice
+            const unpaid = appState.invoices.find(i => i.status !== 'Paid');
+            if (unpaid) {
+                openCheckoutModal(unpaid.id);
+            } else if (appState.invoices.length > 0) {
+                openCheckoutModal(appState.invoices[0].id);
+            }
+        }
+
+        function closeCheckoutModal() {
+            const modal = document.getElementById('checkout-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function switchCheckoutTab(tab) {
+            ['upi', 'card', 'link'].forEach(t => {
+                const pane = document.getElementById(`checkout-pane-${t}`);
+                const btn = document.getElementById(`tab-pay-${t}`);
+                if (t === tab) {
+                    pane.classList.remove('hidden');
+                    btn.className = 'py-2 rounded-lg bg-white text-slate-900 shadow-2xs transition cursor-pointer flex items-center justify-center gap-1.5';
+                } else {
+                    pane.classList.add('hidden');
+                    btn.className = 'py-2 rounded-lg text-slate-600 hover:text-slate-900 transition cursor-pointer flex items-center justify-center gap-1.5';
+                }
+            });
+        }
+
+        function generateCheckoutReminderText() {
+            const inv = appState.invoices.find(i => i.id === appState.activeCheckoutInvoiceId);
+            if (!inv) return;
+            const { total } = calculateInvoiceBreakdown(inv);
+            const shareLink = document.getElementById('checkout-share-url').value;
+            const msg = `Hi ${inv.clientName} team,\n\nHere is your instant payment link for Invoice ${inv.id} (${formatMoney(total)}) from ${appState.business.name}.\n\n💳 Pay via UPI / Card: ${shareLink}\n📲 Direct UPI ID: ${appState.business.upiId}\n\nThank you for your business!`;
+            document.getElementById('checkout-whatsapp-msg').value = msg;
+        }
+
+        function copyShareablePaymentLink() {
+            copyTextValue('checkout-share-url', 'Shareable payment link copied!');
+        }
+
+        // Play synthesized chime on successful payment
+        function playSuccessChime() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                const ctx = new AudioCtx();
+                const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+                notes.forEach((freq, idx) => {
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.08);
+                    gain.gain.setValueAtTime(0.12, ctx.currentTime + idx * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + idx * 0.08 + 0.35);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(ctx.currentTime + idx * 0.08);
+                    osc.stop(ctx.currentTime + idx * 0.08 + 0.35);
+                });
+            } catch (e) {
+                // Audio context optional
+            }
+        }
+
+        function processSimulatedPayment(methodName) {
+            const inv = appState.invoices.find(i => i.id === appState.activeCheckoutInvoiceId);
+            if (!inv) return;
+
+            const { total } = calculateInvoiceBreakdown(inv);
+            inv.status = 'Paid';
+            inv.paymentMethod = methodName;
+
+            const utr = `UTR-${Math.floor(100000000 + Math.random() * 900000000)}`;
+            const nowStr = new Date().toISOString().slice(0, 16).replace('T', ' ');
+
+            appState.settlements.unshift({
+                id: utr,
+                invoiceId: inv.id,
+                client: inv.clientName,
+                amount: total,
+                method: methodName,
+                date: nowStr
+            });
+
+            persistState();
+            playSuccessChime();
+            closeCheckoutModal();
+            refreshAllViews();
+            showToast(`Payment of ${formatMoney(total)} Verified via ${methodName}! (${utr})`, 'success');
+        }
+
+        /**************************************************************
+         * 7. PRINTABLE / DOWNLOADABLE CLEAN INVOICE PREVIEW
+         **************************************************************/
+        function openInvoicePreviewModal(invId) {
+            const inv = appState.invoices.find(i => i.id === invId);
+            if (!inv) return;
+            appState.activePreviewInvoiceId = inv.id;
+
+            const { subtotal, discount, taxAmount, total } = calculateInvoiceBreakdown(inv);
+            const upiUri = `upi://pay?pa=${encodeURIComponent(appState.business.upiId)}&pn=${encodeURIComponent(appState.business.name)}&am=${total}&tn=${encodeURIComponent(inv.id)}`;
+            const qrSvg = generateDeterministicQrSvg(upiUri, 110);
+
+            const sheet = document.getElementById('printable-invoice-area');
+            sheet.innerHTML = `
+                <div class="max-w-2xl mx-auto text-slate-800 space-y-8">
+                    <!-- Top Header -->
+                    <div class="flex flex-col sm:flex-row justify-between items-start gap-4 pb-6 border-b border-slate-200">
+                        <div>
+                            <div class="flex items-center gap-2.5">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center font-bold">N</div>
+                                <h2 class="text-xl font-extrabold text-slate-900">${appState.business.name}</h2>
+                            </div>
+                            <p class="text-xs text-slate-500 mt-1">${appState.business.address}</p>
+                            <p class="text-xs font-mono text-slate-500 mt-0.5">GSTIN: ${appState.business.gstin} • UPI: ${appState.business.upiId}</p>
+                        </div>
+                        <div class="sm:text-right">
+                            <span class="text-xs font-bold uppercase tracking-widest text-indigo-600">Tax Invoice</span>
+                            <h3 class="text-lg font-mono font-bold text-slate-900 mt-0.5">${inv.id}</h3>
+                            <span class="inline-block mt-1 px-2.5 py-0.5 rounded-full text-xs font-bold ${inv.status === 'Paid' ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}">
+                                ${inv.status.toUpperCase()}
+                            </span>
+                        </div>
+                    </div>
+
+                    <!-- Billing & Dates -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 text-xs">
+                        <div>
+                            <p class="font-bold uppercase tracking-wider text-slate-400 mb-1">Billed To</p>
+                            <p class="font-bold text-sm text-slate-900">${inv.clientName}</p>
+                            <p class="text-slate-600 mt-0.5">${inv.clientAddress}</p>
+                            <p class="text-slate-500 mt-0.5">${inv.clientEmail} ${inv.clientPhone ? '• ' + inv.clientPhone : ''}</p>
+                        </div>
+                        <div class="sm:text-right space-y-1">
+                            <div><span class="text-slate-400">Issue Date:</span> <strong class="text-slate-800">${inv.issueDate}</strong></div>
+                            <div><span class="text-slate-400">Due Date:</span> <strong class="text-slate-800">${inv.dueDate}</strong></div>
+                            <div><span class="text-slate-400">Currency:</span> <strong class="text-slate-800">${appState.currency} (${getCurrencySymbol()})</strong></div>
+                        </div>
+                    </div>
+
+                    <!-- Line Items Table -->
+                    <div class="border border-slate-200 rounded-xl overflow-hidden">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="bg-slate-100 text-slate-600 font-bold border-b border-slate-200">
+                                    <th class="py-3 px-4">#</th>
+                                    <th class="py-3 px-4">Item Description</th>
+                                    <th class="py-3 px-4 text-center">Qty</th>
+                                    <th class="py-3 px-4 text-right">Rate</th>
+                                    <th class="py-3 px-4 text-right">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-200">
+                                ${inv.items.map((item, idx) => `
+                                    <tr>
+                                        <td class="py-3 px-4 text-slate-400">${idx + 1}</td>
+                                        <td class="py-3 px-4 font-semibold text-slate-900">${item.description}</td>
+                                        <td class="py-3 px-4 text-center">${item.qty}</td>
+                                        <td class="py-3 px-4 text-right">${formatMoney(item.price, true)}</td>
+                                        <td class="py-3 px-4 text-right font-bold text-slate-900">${formatMoney(item.qty * item.price, true)}</td>
+                                    </tr>
+                                `).join('')}
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Bottom Summary & UPI QR -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 items-center pt-2">
+                        <div class="flex items-center gap-4 p-3.5 rounded-xl bg-slate-50 border border-slate-200">
+                            <div class="bg-white p-1.5 rounded-lg border border-slate-200 shrink-0">
+                                ${qrSvg}
+                            </div>
+                            <div class="text-xs space-y-1">
+                                <p class="font-bold text-slate-900">Scan to Pay via UPI</p>
+                                <p class="font-mono text-[11px] text-slate-600">${appState.business.upiId}</p>
+                                <p class="text-[11px] text-slate-500 leading-snug">${inv.notes || ''}</p>
+                            </div>
+                        </div>
+
+                        <div class="space-y-2 text-xs">
+                            <div class="flex justify-between text-slate-600">
+                                <span>Subtotal</span>
+                                <span class="font-semibold text-slate-900">${formatMoney(subtotal, true)}</span>
+                            </div>
+                            ${discount > 0 ? `
+                                <div class="flex justify-between text-emerald-600">
+                                    <span>Discount</span>
+                                    <span>-${formatMoney(discount, true)}</span>
+                                </div>
+                            ` : ''}
+                            <div class="flex justify-between text-slate-600">
+                                <span>GST / Tax (${inv.taxRate}%)</span>
+                                <span class="font-semibold text-slate-900">${formatMoney(taxAmount, true)}</span>
+                            </div>
+                            <div class="pt-2 border-t border-slate-200 flex justify-between text-base font-extrabold text-slate-900">
+                                <span>Total Due</span>
+                                <span class="text-indigo-600">${formatMoney(total, true)}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const modal = document.getElementById('invoice-preview-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeInvoicePreviewModal() {
+            const modal = document.getElementById('invoice-preview-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function downloadInvoiceHtml() {
+            const invId = appState.activePreviewInvoiceId || 'Invoice';
+            const content = document.getElementById('printable-invoice-area').innerHTML;
+            const fullHtml = `<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${invId}</title><script src="https://cdn.tailwindcss.com"><\/script></head><body class="p-10 bg-white">${content}</body></html>`;
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${invId}.html`;
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast(`Downloaded ${invId}.html`, 'success');
+        }
+
+        /**************************************************************
+         * 8. PRODUCT & SERVICE CATALOG + EXPENSE TRACKER
+         **************************************************************/
+        function renderCatalog() {
+            const grid = document.getElementById('catalog-grid');
+            const query = (document.getElementById('catalog-search')?.value || '').toLowerCase();
+
+            const filtered = appState.products.filter(p =>
+                !query || p.name.toLowerCase().includes(query) || p.category.toLowerCase().includes(query)
+            );
+
+            grid.innerHTML = filtered.map(prod => `
+                <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-xs hover:shadow-md transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-3">
+                            <span class="text-[10px] font-bold uppercase tracking-wider px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
+                                ${prod.category}
+                            </span>
+                            <span class="font-mono text-xs text-slate-400">${prod.id}</span>
+                        </div>
+                        <h4 class="font-bold text-slate-900 text-base">${prod.name}</h4>
+                        <p class="text-xs text-slate-500 mt-1.5 leading-relaxed">${prod.description}</p>
+                    </div>
+
+                    <div class="mt-5 pt-4 border-t border-slate-100 flex items-center justify-between gap-2">
+                        <div>
+                            <span class="text-[10px] uppercase tracking-wider text-slate-400 block">Unit Rate</span>
+                            <span class="text-lg font-extrabold text-slate-900">${formatMoney(prod.price)}</span>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <button onclick="quickAiPitchProduct('${prod.id}')" title="AI Write Marketing Pitch" class="px-2.5 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 font-semibold text-xs transition cursor-pointer flex items-center gap-1">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Pitch
+                            </button>
+                            <button onclick="openInvoiceModal('${prod.id}')" class="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-indigo-600 text-white font-semibold text-xs transition cursor-pointer flex items-center gap-1.5">
+                                <i class="fa-solid fa-plus"></i> Add to Invoice
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openProductModal() {
+            document.getElementById('prod-name').value = '';
+            document.getElementById('prod-price').value = '';
+            document.getElementById('prod-desc').value = '';
+            const modal = document.getElementById('product-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeProductModal() {
+            const modal = document.getElementById('product-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveProduct(e) {
+            e.preventDefault();
+            const name = document.getElementById('prod-name').value.trim();
+            const category = document.getElementById('prod-category').value;
+            const price = Number(document.getElementById('prod-price').value) || 0;
+            const description = document.getElementById('prod-desc').value.trim() || 'Standard billable service.';
+
+            if (!name || price <= 0) return;
+
+            const newProd = {
+                id: `PRD-0${appState.products.length + 1}`,
+                name,
+                category,
+                price,
+                description
+            };
+
+            appState.products.unshift(newProd);
+            persistState();
+            closeProductModal();
+            refreshAllViews();
+            showToast(`Added "${name}" to Product Catalog!`, 'success');
+        }
+
+        // Expenses & Settlement Ledger
+        function renderExpensesAndLedger() {
+            const expTbody = document.getElementById('expenses-table-body');
+            document.getElementById('expense-count-badge').textContent = `${appState.expenses.length} recorded outflows`;
+
+            expTbody.innerHTML = appState.expenses.map(exp => `
+                <tr class="hover:bg-slate-50 transition">
+                    <td class="py-3.5 px-4 font-semibold text-slate-900 text-xs sm:text-sm">${exp.title}</td>
+                    <td class="py-3.5 px-4">
+                        <span class="text-xs px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-700 font-medium">${exp.category}</span>
+                    </td>
+                    <td class="py-3.5 px-4 text-xs text-slate-500">${exp.date}</td>
+                    <td class="py-3.5 px-4 font-bold text-rose-600 text-xs sm:text-sm">-${formatMoney(exp.amount)}</td>
+                    <td class="py-3.5 px-4 text-right">
+                        <button onclick="deleteExpense('${exp.id}')" class="text-slate-400 hover:text-rose-600 text-xs cursor-pointer">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+
+            const logContainer = document.getElementById('full-settlement-log');
+            logContainer.innerHTML = appState.settlements.map(s => `
+                <div class="p-4 flex items-center justify-between hover:bg-slate-50 transition">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-xs text-slate-900">${s.client}</span>
+                            <span class="text-[10px] font-mono bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">${s.method}</span>
+                        </div>
+                        <p class="text-[11px] font-mono text-slate-400 mt-0.5">${s.id} • ${s.invoiceId}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-extrabold text-xs sm:text-sm text-emerald-600">+${formatMoney(s.amount)}</p>
+                        <p class="text-[10px] text-slate-400">${s.date}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function openExpenseModal() {
+            document.getElementById('exp-title').value = '';
+            document.getElementById('exp-amount').value = '';
+            document.getElementById('exp-date').value = new Date().toISOString().split('T')[0];
+            const modal = document.getElementById('expense-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeExpenseModal() {
+            const modal = document.getElementById('expense-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveExpense(e) {
+            e.preventDefault();
+            const title = document.getElementById('exp-title').value.trim();
+            const category = document.getElementById('exp-category').value;
+            const amount = Number(document.getElementById('exp-amount').value) || 0;
+            const date = document.getElementById('exp-date').value;
+
+            if (!title || amount <= 0) return;
+
+            appState.expenses.unshift({
+                id: `EXP-0${appState.expenses.length + 1}`,
+                title,
+                category,
+                amount,
+                date
+            });
+
+            persistState();
+            closeExpenseModal();
+            refreshAllViews();
+            showToast(`Expense "${title}" (${formatMoney(amount)}) logged.`, 'info');
+        }
+
+        function deleteExpense(expId) {
+            appState.expenses = appState.expenses.filter(e => e.id !== expId);
+            persistState();
+            refreshAllViews();
+            showToast('Expense entry deleted.', 'info');
+        }
+
+        // Merchant Settings Modal
+        function openBusinessSettingsModal() {
+            document.getElementById('set-biz-name').value = appState.business.name;
+            document.getElementById('set-biz-upi').value = appState.business.upiId;
+            document.getElementById('set-biz-gst').value = appState.business.gstin;
+            document.getElementById('set-biz-address').value = appState.business.address;
+            const modal = document.getElementById('settings-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeBusinessSettingsModal() {
+            const modal = document.getElementById('settings-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function saveBusinessSettings(e) {
+            e.preventDefault();
+            appState.business.name = document.getElementById('set-biz-name').value.trim();
+            appState.business.upiId = document.getElementById('set-biz-upi').value.trim();
+            appState.business.gstin = document.getElementById('set-biz-gst').value.trim();
+            appState.business.address = document.getElementById('set-biz-address').value.trim();
+            persistState();
+            closeBusinessSettingsModal();
+            refreshAllViews();
+            showToast('Merchant profile & UPI ID updated!', 'success');
+        }
+
+        /**************************************************************
+         * 9. GEMINI API INTEGRATION (`gemini-3-flash-preview`)
+         **************************************************************/
+        const apiKey = ""; // Provided automatically by the Canvas runtime environment
+
+        async function callGeminiAPI(userPrompt, systemInstructionText) {
+            const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
+            const payload = {
+                contents: [{ parts: [{ text: userPrompt }] }],
+                systemInstruction: {
+                    parts: [{ text: systemInstructionText }]
+                }
+            };
+
+            const delays = [1000, 2000, 4000];
+            for (let attempt = 0; attempt <= delays.length; attempt++) {
+                try {
+                    const response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+
+                    if (!response.ok) {
+                        throw new Error(`HTTP ${response.status}`);
+                    }
+
+                    const result = await response.json();
+                    const text = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+                    if (text) return text;
+                    throw new Error('Empty response candidate');
+                } catch (err) {
+                    if (attempt < delays.length) {
+                        await new Promise(res => setTimeout(res, delays[attempt]));
+                    } else {
+                        throw err;
+                    }
+                }
+            }
+        }
+
+        function buildBusinessContextSnapshot() {
+            const summary = computeBusinessSummary();
+            const invoiceLines = appState.invoices.map(i => {
+                const { total } = calculateInvoiceBreakdown(i);
+                return `- ${i.id}: Client "${i.clientName}", Amount ${formatMoney(total)}, Status: ${i.status}, Due: ${i.dueDate}`;
+            }).join('\n');
+
+            const expenseLines = appState.expenses.map(e =>
+                `- ${e.title} (${e.category}): ${formatMoney(e.amount)} on ${e.date}`
+            ).join('\n');
+
+            const catalogLines = appState.products.map(p =>
+                `- ${p.name} (${p.category}): ${formatMoney(p.price)}`
+            ).join('\n');
+
+            return `
+Merchant Name: ${appState.business.name}
+Merchant UPI ID: ${appState.business.upiId}
+Active Display Currency: ${appState.currency} (${getCurrencySymbol()})
+Total Collected Revenue: ${formatMoney(summary.totalRevenue)} (${summary.paidCount} paid invoices)
+Total Pending/Overdue Receivables: ${formatMoney(summary.pendingTotal)} (${summary.overdueCount} overdue)
+Total Operating Expenses: ${formatMoney(summary.totalExpenses)}
+Net Profit: ${formatMoney(summary.netProfit)} (${summary.profitMargin}% Net Margin)
+
+INVOICES:
+${invoiceLines}
+
+EXPENSES:
+${expenseLines}
+
+PRODUCT & SERVICE CATALOG:
+${catalogLines}
+            `.trim();
+        }
+
+        function formatMarkdownToHtml(md) {
+            return md
+                .replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-slate-900">$1</strong>')
+                .replace(/^### (.*$)/gim, '<h5 class="font-bold text-slate-900 text-sm mt-3 mb-1">$1</h5>')
+                .replace(/^## (.*$)/gim, '<h4 class="font-bold text-indigo-950 text-sm mt-3 mb-1">$1</h4>')
+                .replace(/^- (.*$)/gim, '<li class="ml-4 list-disc text-slate-700">$1</li>')
+                .replace(/\n\n/g, '<br><br>')
+                .replace(/\n/g, '<br>');
+        }
+
+        // Feature 4A: Smart Financial Insights
+        async function generateFinancialInsights() {
+            const container = document.getElementById('ai-insights-container');
+            const summary = computeBusinessSummary();
+
+            container.innerHTML = `
+                <div class="flex items-center gap-3 py-6 text-indigo-600">
+                    <i class="fa-solid fa-circle-notch fa-spin text-lg"></i>
+                    <span class="text-xs font-semibold">Gemini AI is auditing your invoices, receivables, and expense ratios...</span>
+                </div>
+            `;
+
+            const systemPrompt = "You are an elite Fintech CFO and Business Growth Advisor. Give concise, high-impact, data-backed financial insights using the exact numbers and client names from the user's business snapshot. Structure with 3 short sections: 1) Cash Flow & Receivables Alert, 2) Profit & Expense Optimization, 3) Revenue Growth Action.";
+            const userPrompt = `Analyze my current business metrics and provide 3 actionable insights:\n\n${buildBusinessContextSnapshot()}`;
+
+            try {
+                const aiResponse = await callGeminiAPI(userPrompt, systemPrompt);
+                container.innerHTML = `
+                    <div class="p-4 rounded-xl bg-indigo-50/50 border border-indigo-100 text-xs sm:text-sm leading-relaxed space-y-2">
+                        ${formatMarkdownToHtml(aiResponse)}
+                    </div>
+                `;
+            } catch (err) {
+                // Intelligent deterministic fallback using live app metrics
+                const overdueList = appState.invoices.filter(i => i.status === 'Overdue');
+                const pendingList = appState.invoices.filter(i => i.status === 'Pending');
+                container.innerHTML = `
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-xs">
+                        <div class="p-3.5 rounded-xl bg-rose-50/70 border border-rose-200/80">
+                            <p class="font-bold text-rose-950 mb-1"><i class="fa-solid fa-bell text-rose-600 mr-1"></i> 1. Receivables Recovery</p>
+                            <p class="text-slate-700 leading-relaxed">
+                                You have <strong>${formatMoney(summary.pendingTotal)}</strong> tied up in unpaid invoices (${overdueList.length} overdue, ${pendingList.length} pending). Prioritize collecting from <strong>${overdueList[0]?.clientName || pendingList[0]?.clientName || 'your open accounts'}</strong> via instant UPI QR to boost cash on hand by <strong>+${Math.round((summary.pendingTotal / Math.max(1, summary.totalRevenue)) * 100)}%</strong>.
+                            </p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-emerald-50/70 border border-emerald-200/80">
+                            <p class="font-bold text-emerald-950 mb-1"><i class="fa-solid fa-chart-pie text-emerald-600 mr-1"></i> 2. Margin Health (${summary.profitMargin}%)</p>
+                            <p class="text-slate-700 leading-relaxed">
+                                Operating expenses (${formatMoney(summary.totalExpenses)}) represent <strong>${100 - summary.profitMargin}%</strong> of collected revenue. Locking clients into annual retainers will stabilize recurring cash inflow against fixed cloud & contractor costs.
+                            </p>
+                        </div>
+                        <div class="p-3.5 rounded-xl bg-indigo-50/70 border border-indigo-200/80">
+                            <p class="font-bold text-indigo-950 mb-1"><i class="fa-solid fa-rocket text-indigo-600 mr-1"></i> 3. Upsell Opportunity</p>
+                            <p class="text-slate-700 leading-relaxed">
+                                Bundle <strong>Monthly Cloud & Security Retainer</strong> (${formatMoney(28000)}) with every <strong>Enterprise AI Automation Suite</strong> deal to increase customer LTV by 33%.
+                            </p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        // Feature 4B: AI Content & Reminder Generator
+        function updateAiContentTargetOptions() {
+            const type = document.getElementById('ai-content-type').value;
+            const targetSelect = document.getElementById('ai-content-target');
+            const label = document.getElementById('ai-target-label');
+
+            if (type === 'product_pitch') {
+                label.textContent = 'Select Product / Service from Catalog';
+                targetSelect.innerHTML = appState.products.map(p =>
+                    `<option value="${p.id}">${p.name} (${formatMoney(p.price)})</option>`
+                ).join('');
+            } else {
+                label.textContent = 'Select Target Invoice / Client';
+                targetSelect.innerHTML = appState.invoices.map(i => {
+                    const { total } = calculateInvoiceBreakdown(i);
+                    return `<option value="${i.id}">${i.id} — ${i.clientName} (${formatMoney(total)} • ${i.status})</option>`;
+                }).join('');
+            }
+        }
+
+        async function generateAiBusinessCopy() {
+            const type = document.getElementById('ai-content-type').value;
+            const targetId = document.getElementById('ai-content-target').value;
+            const customNote = document.getElementById('ai-content-custom').value.trim();
+            const outputEl = document.getElementById('ai-generated-copy');
+            const btn = document.getElementById('btn-generate-copy');
+
+            btn.disabled = true;
+            btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Drafting...</span>`;
+            outputEl.value = "Gemini AI is crafting your personalized business message...";
+
+            let prompt = '';
+            let fallbackText = '';
+
+            if (type === 'product_pitch') {
+                const prod = appState.products.find(p => p.id === targetId) || appState.products[0];
+                prompt = `Write a persuasive, modern B2B marketing pitch (suitable for Email or LinkedIn/WhatsApp) for our service "${prod.name}" priced at ${formatMoney(prod.price)}. Details: ${prod.description}. Company: ${appState.business.name}. ${customNote ? 'Extra instruction: ' + customNote : ''}`;
+                fallbackText = `🚀 Elevate Your Operations with ${prod.name}\n\nHi there,\n\nAt ${appState.business.name}, we help fast-growing teams scale effortlessly with our ${prod.name}.\n\n✅ What's Included: ${prod.description}\n💡 Investment: ${formatMoney(prod.price)}\n${customNote ? '🎁 Special Note: ' + customNote + '\n' : ''}\nReply to this message or request an instant invoice link to get started this week!\n\nBest regards,\n${appState.business.name}`;
+            } else {
+                const inv = appState.invoices.find(i => i.id === targetId) || appState.invoices[0];
+                const { total } = calculateInvoiceBreakdown(inv);
+                const payLink = `https://pay.nexuspay.ai/${inv.id.toLowerCase()}`;
+
+                if (type === 'whatsapp_reminder') {
+                    prompt = `Write a polite, concise, high-converting WhatsApp payment reminder message to client "${inv.clientName}" for Invoice ${inv.id} of amount ${formatMoney(total)} (Status: ${inv.status}, Due: ${inv.dueDate}). Include our UPI ID (${appState.business.upiId}) and payment link (${payLink}). ${customNote}`;
+                } else if (type === 'email_overdue') {
+                    prompt = `Write a professional follow-up email with Subject Line to "${inv.clientName}" regarding ${inv.status} Invoice ${inv.id} for ${formatMoney(total)} (Due: ${inv.dueDate}). Provide UPI ID (${appState.business.upiId}) and checkout link (${payLink}). ${customNote}`;
+                } else {
+                    prompt = `Write a warm, professional 2-sentence invoice thank-you note and clear payment terms for client "${inv.clientName}" on Invoice ${inv.id} (${formatMoney(total)}). Mention UPI ID ${appState.business.upiId}. ${customNote}`;
+                }
+
+                fallbackText = `Subject: Friendly Payment Reminder: Invoice ${inv.id} (${formatMoney(total)})\n\nHi ${inv.clientName} Team,\n\nI hope your week is going well! This is a gentle reminder regarding Invoice ${inv.id} for ${formatMoney(total)}, which was due on ${inv.dueDate}.\n\nFor your convenience, you can complete the settlement in one click:\n🔗 Instant Checkout Link: ${payLink}\n📲 Direct Corporate UPI ID: ${appState.business.upiId}\n${customNote ? '\nNote: ' + customNote + '\n' : ''}\nPlease let us know once the transfer is initiated so we can send over your stamped tax receipt.\n\nWarm regards,\nFinance Team — ${appState.business.name}`;
+            }
+
+            try {
+                const text = await callGeminiAPI(prompt, "You are an expert business communications writer. Output clean, ready-to-send plain text without markdown code fences.");
+                outputEl.value = text.trim();
+                showToast('AI draft generated!', 'info');
+            } catch (err) {
+                outputEl.value = fallbackText;
+                showToast('Generated smart template draft!', 'info');
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = `<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Generate with AI</span>`;
+            }
+        }
+
+        function copyAiDraft() {
+            copyTextValue('ai-generated-copy', 'AI draft copied to clipboard!');
+        }
+
+        // Quick Triggers from Dashboard / Invoices / Catalog into AI Studio
+        function quickAiRemindInvoice(invId) {
+            switchTab('ai-assistant');
+            document.getElementById('ai-content-type').value = 'whatsapp_reminder';
+            updateAiContentTargetOptions();
+            document.getElementById('ai-content-target').value = invId;
+            generateAiBusinessCopy();
+        }
+
+        function quickAiPitchProduct(prodId) {
+            switchTab('ai-assistant');
+            document.getElementById('ai-content-type').value = 'product_pitch';
+            updateAiContentTargetOptions();
+            document.getElementById('ai-content-target').value = prodId;
+            generateAiBusinessCopy();
+        }
+
+        async function aiDraftInvoiceNoteInModal() {
+            const client = document.getElementById('inv-client-name').value || 'Valued Client';
+            const notesEl = document.getElementById('inv-notes');
+            notesEl.value = 'Generating professional note with Gemini AI...';
+            try {
+                const res = await callGeminiAPI(
+                    `Write a 2-sentence polite, professional invoice thank-you note and payment instruction for client "${client}". Mention instant UPI payment to ${appState.business.upiId}.`,
+                    "Output only the 2-sentence invoice note."
+                );
+                notesEl.value = res.trim();
+            } catch (e) {
+                notesEl.value = `Thank you for your partnership, ${client}! Please remit payment within 14 days via UPI (${appState.business.upiId}) or our secure online checkout link.`;
+            }
+        }
+
+        async function aiGenerateProductDescriptionInModal() {
+            const name = document.getElementById('prod-name').value.trim() || 'Premium Business Service';
+            const descEl = document.getElementById('prod-desc');
+            descEl.value = 'Crafting value proposition with Gemini AI...';
+            try {
+                const res = await callGeminiAPI(
+                    `Write a crisp, high-converting 2-sentence description for a B2B product/service named "${name}".`,
+                    "Output only the 2-sentence description."
+                );
+                descEl.value = res.trim();
+            } catch (e) {
+                descEl.value = `End-to-end delivery of ${name}, engineered for rapid ROI, enterprise reliability, and seamless team onboarding.`;
+            }
+        }
+
+        // Feature 4C: Interactive AI Business Advisor Chat
+        function renderAiChatMessages() {
+            const container = document.getElementById('ai-chat-messages');
+            container.innerHTML = appState.chatHistory.map(msg => {
+                if (msg.role === 'user') {
+                    return `
+                        <div class="flex justify-end">
+                            <div class="max-w-[85%] rounded-2xl rounded-tr-xs bg-indigo-600 text-white px-4 py-2.5 text-xs sm:text-sm shadow-xs">
+                                ${msg.text}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    return `
+                        <div class="flex items-start gap-2.5">
+                            <div class="w-7 h-7 rounded-lg ai-gradient-bg text-white flex items-center justify-center shrink-0 text-xs mt-0.5">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <div class="max-w-[88%] rounded-2xl rounded-tl-xs bg-white border border-slate-200/90 px-4 py-3 text-xs sm:text-sm text-slate-700 shadow-2xs leading-relaxed">
+                                ${formatMarkdownToHtml(msg.text)}
+                            </div>
+                        </div>
+                    `;
+                }
+            }).join('');
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function sendQuickChatPrompt(promptText) {
+            document.getElementById('ai-chat-input').value = promptText;
+            handleAiChatSubmit(new Event('submit'));
+        }
+
+        async function handleAiChatSubmit(e) {
+            e.preventDefault();
+            const inputEl = document.getElementById('ai-chat-input');
+            const userText = inputEl.value.trim();
+            if (!userText) return;
+
+            inputEl.value = '';
+            appState.chatHistory.push({ role: 'user', text: userText });
+            appState.chatHistory.push({ role: 'ai', text: '<i class="fa-solid fa-circle-notch fa-spin text-indigo-600 mr-1.5"></i> Thinking with live business data...' });
+            renderAiChatMessages();
+
+            const systemPrompt = `You are the built-in AI CFO and Business Strategist inside NexusPay AI. You have live access to the user's financial data below. Answer questions concisely, practically, and reference specific clients, invoice IDs, or catalog items when relevant.\n\nLIVE BUSINESS SNAPSHOT:\n${buildBusinessContextSnapshot()}`;
+
+            try {
+                const reply = await callGeminiAPI(userText, systemPrompt);
+                appState.chatHistory.pop();
+                appState.chatHistory.push({ role: 'ai', text: reply });
+            } catch (err) {
+                const summary = computeBusinessSummary();
+                appState.chatHistory.pop();
+                appState.chatHistory.push({
+                    role: 'ai',
+                    text: `Based on your live ledger, your collected revenue is **${formatMoney(summary.totalRevenue)}**, operating expenses are **${formatMoney(summary.totalExpenses)}**, and net profit is **${formatMoney(summary.netProfit)}** (**${summary.profitMargin}% margin**). You have **${formatMoney(summary.pendingTotal)}** in open receivables. I recommend sending an instant UPI QR reminder to your overdue accounts and bundling your **Monthly Cloud & Security Retainer** with new project invoices to boost recurring cash flow.`
+                });
+            }
+
+            persistState();
+            renderAiChatMessages();
+        }
+
+        function clearAiChat() {
+            appState.chatHistory = [{
+                role: 'ai',
+                text: "Chat history cleared! Ask me anything about your invoices, pricing strategy, or cash flow."
+            }];
+            persistState();
+            renderAiChatMessages();
+        }
+
+        /**************************************************************
+         * 10. MASTER INITIALIZATION
+         **************************************************************/
+        function refreshAllViews() {
+            renderDashboard();
+            renderInvoicesTable();
+            renderCatalog();
+            renderExpensesAndLedger();
+            updateAiContentTargetOptions();
+            renderAiChatMessages();
+        }
+
+        window.onload = function () {
+            loadSavedState();
+            refreshAllViews();
+            generateFinancialInsights();
+        };
+    </script>
+</body>
+</html>
